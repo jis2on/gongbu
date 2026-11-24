@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>기초학력 단계별 문제 생성기</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--line:#dfe3e8;--ink:#1d2733;--sub:#5d6875;--ac:#2563c9;--ac2:#e9f0fc;--ok:#1d7a46;--warn:#a5530a;--warnbg:#fff6e8}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+header{background:#1e2a3f;color:#fff;padding:14px 22px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:700}
+header span{opacity:.75;font-size:12.5px}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;padding:16px;max-width:1440px;margin:0 auto}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.card h2 small{font-weight:400;color:var(--sub);font-size:12px}
+.muted{color:var(--sub);font-size:12.5px}
+input[type=text],input[type=number],select,textarea{font:inherit;border:1px solid #c9d0d8;border-radius:6px;padding:6px 8px;background:#fff;color:inherit}
+textarea{width:100%;resize:vertical;min-height:38px}
+button{font:inherit;border:1px solid #c9d0d8;background:#fff;border-radius:6px;padding:6px 12px;cursor:pointer;color:inherit}
+button:hover{background:#f1f3f6}
+button.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+button.pri:hover{background:#1d52a8}
+button.sm{padding:3px 8px;font-size:12px}
+button.danger{color:#b42318}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stu-list{list-style:none;margin:8px 0 0;padding:0;max-height:52vh;overflow:auto}
+.stu-list li{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:7px;cursor:pointer;gap:6px}
+.stu-list li:hover{background:#f1f3f6}
+.stu-list li.on{background:var(--ac2);font-weight:600}
+.stu-list .cnt{font-size:11.5px;color:var(--sub);font-weight:400}
+.subj-table{width:100%;border-collapse:collapse}
+.subj-table th,.subj-table td{border-bottom:1px solid var(--line);padding:8px 6px;vertical-align:top;text-align:left}
+.subj-table th{font-size:12.5px;color:var(--sub);font-weight:600}
+.subj-table td.sname{font-weight:700;width:52px;padding-top:12px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.chip{display:inline-block;background:var(--ac2);color:#1d4f9c;border-radius:20px;padding:1px 9px;font-size:12px}
+.chip.ok{background:#e7f6ec;color:var(--ok)}
+.topic-box{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.topic-box label{border:1px solid #c9d0d8;border-radius:20px;padding:3px 11px;cursor:pointer;font-size:13px;user-select:none}
+.topic-box label.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.topic-box input{display:none}
+.topic-box label.exam{border-color:#c98a1c}
+.topic-box label.exam.on{background:#b26f00;border-color:#b26f00}
+.grid2{display:grid;grid-template-columns:110px 1fr;gap:9px 12px;align-items:center}
+.notice{background:var(--warnbg);border:1px solid #f3d29b;color:var(--warn);padding:8px 12px;border-radius:7px;margin:8px 0;font-size:13px}
+.notice.info{background:#eef5ff;border-color:#c5d9f6;color:#1d4f9c}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e2a3f;color:#fff;padding:9px 18px;border-radius:8px;font-size:13.5px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+.toast.show{opacity:1}
+details summary{cursor:pointer;font-weight:600}
+.help li{margin-bottom:4px}
+#previewWrap{background:#e9ebef;border-radius:10px;padding:16px;overflow:auto}
+.empty{color:var(--sub);text-align:center;padding:40px 10px}
+/* ===== 학습지 ===== */
+.sheet{background:#fff;width:210mm;max-width:100%;margin:0 auto 16px;padding:14mm 13mm;box-shadow:0 1px 4px rgba(0,0,0,.12);color:#111;font-size:10.5pt;line-height:1.55}
+.sh-head{border-bottom:2px solid #222;padding-bottom:6px;margin-bottom:10px}
+.sh-title{font-size:15pt;font-weight:800}
+.sh-title .lv{font-size:10.5pt;font-weight:600;border:1px solid #333;border-radius:4px;padding:0 6px;margin-left:6px;vertical-align:middle}
+.sh-meta{display:flex;justify-content:space-between;gap:10px;margin-top:5px;font-size:10pt;flex-wrap:wrap}
+.sh-topics{font-size:9pt;color:#555;margin-top:3px}
+ol.qs{margin:0;padding-left:0;list-style:none;columns:2;column-gap:9mm;column-rule:1px solid #ddd}
+ol.qs li.q{break-inside:avoid;page-break-inside:avoid;margin:0 0 4.5mm;display:block}
+.qn{font-weight:800;margin-right:4px}
+.qbox{border:1px solid #999;padding:4px 8px;margin:4px 0;border-radius:3px;background:#fafafa}
+.sys{display:inline-block;border-left:2px solid #333;padding:2px 10px;margin:4px 0 0 6px;line-height:1.8}
+.chs{margin-top:3px}
+.ch{display:inline-block;margin-right:14px}
+.chs.col .ch{display:block;margin:1px 0}
+.ansline{margin-top:5px}
+.ansline span{display:inline-block;border-bottom:1px solid #444;width:42mm;height:1.1em}
+.gap{letter-spacing:0;white-space:nowrap}
+.hint{color:#444}
+.en{font-family:"Times New Roman",Georgia,serif;font-size:11.5pt}
+.pron{color:#555;font-size:9.5pt}
+.reused{font-size:8pt;color:#a5530a}
+.anst{width:100%;border-collapse:collapse;font-size:9.5pt}
+.anst th,.anst td{border:1px solid #888;padding:3px 6px;text-align:left;vertical-align:top}
+.anst th{background:#f0f0f0}
+.voc{width:100%;border-collapse:collapse;font-size:10pt}
+.voc th,.voc td{border:1px solid #888;padding:3px 6px}
+.voc th{background:#f0f0f0}
+.voc td.c{text-align:center}
+.wrapt{width:100%;border-collapse:collapse}
+.wrapt>tbody>tr>td{vertical-align:top;padding:0 2mm;width:50%}
+.pb{break-before:page;page-break-before:always;height:0}
+@media print{
+  @page{size:A4;margin:12mm 11mm}
+  body{background:#fff}
+  header,.no-print,aside,.toast{display:none!important}
+  .layout{display:block;padding:0;max-width:none}
+  .card{border:0;padding:0;margin:0}
+  #previewWrap{background:#fff;padding:0;border-radius:0;overflow:visible}
+  .sheet{box-shadow:none;margin:0;width:auto;padding:0}
+}
+</style>
+</head>
+<body>
+<header><h1>기초학력 단계별 문제 생성기</h1><span>국어 · 영어 · 수학 · 과학 · 역사 | 중학교 2학년 기초학력 보충용</span></header>
+<div class="layout">
+<aside class="no-print">
+  <div class="card">
+    <h2>학생 명단</h2>
+    <div class="row"><input id="newNo" type="number" min="1" placeholder="번호" style="width:64px"><input id="newName" type="text" placeholder="이름(가명 권장)" style="flex:1;min-width:0"></div>
+    <div class="row" style="margin-top:6px"><button class="pri" id="addStu" style="flex:1">학생 추가</button></div>
+    <div class="row" style="margin-top:6px"><textarea id="bulkNames" rows="2" placeholder="여러 명 한꺼번에: 한 줄에 한 명씩 (예: 1 학생A)"></textarea></div>
+    <div class="row" style="margin-top:4px"><button class="sm" id="bulkAdd">여러 명 추가</button></div>
+    <ul class="stu-list" id="stuList"></ul>
+    <p class="muted" style="margin:8px 0 0">실명 대신 번호나 가명을 쓰세요. 민감한 정보(가정환경, 진단명 등)는 적지 않는 것이 좋아요.</p>
+  </div>
+  <div class="card">
+    <h2>저장 · 백업</h2>
+    <p class="muted" id="storeMsg" style="margin:0 0 8px">입력한 내용은 이 브라우저에 자동 저장돼요.</p>
+    <div class="row"><button class="sm" id="exportBtn">백업 파일 저장</button><button class="sm" id="importBtn">백업 불러오기</button><input type="file" id="importFile" accept=".json" style="display:none"></div>
+  </div>
+  <div class="card">
+    <details class="help"><summary>사용 방법</summary>
+    <ol style="padding-left:18px;margin:8px 0 0;font-size:13px">
+      <li>왼쪽에서 학생을 추가하고 선택해요.</li>
+      <li>과목별 <b>수준</b>과 <b>학생 특징</b>을 적어요. 특징에 맞는 출제 주제가 자동으로 추천돼요.</li>
+      <li>‘문제지 만들기’에서 과목을 고르고 <b>문제 만들기</b>를 눌러요.</li>
+      <li><b>인쇄 / PDF 저장</b> 또는 <b>Word 파일 다운로드</b>를 눌러요. 이때 출제 기록이 저장되고, 다음에는 이 문항이 빠져요.</li>
+      <li>여러 학생에게 한꺼번에 나눠 줄 때는 ‘여러 학생 한꺼번에’를 사용해요.</li>
+    </ol></details>
+  </div>
+</aside>
+<main>
+  <div class="card no-print" id="stuPanel"></div>
+  <div class="card no-print" id="genPanel">
+    <h2>문제지 만들기 <small id="genFor"></small></h2>
+    <div class="grid2">
+      <div>과목</div><div class="row" id="subBtns"></div>
+      <div id="kindLbl">자료 종류</div><div class="row" id="kindRow">
+        <label><input type="radio" name="kind" value="quiz" checked> 문제지</label>
+        <label><input type="radio" name="kind" value="vocab"> 단어장 (50개)</label>
+        <label id="vtestLbl"><input type="checkbox" id="vtest" checked> 단어 확인 시험지 함께 만들기</label>
+      </div>
+      <div>수준</div><div class="row"><select id="lvSel"></select><span class="muted" id="lvHint"></span></div>
+      <div id="topicLbl">출제 주제</div><div><div class="topic-box" id="topicBox"></div>
+        <div class="row"><button class="sm" id="autoTopic">학생 특징에 맞게 선택</button><button class="sm" id="allTopic">전체 선택</button><button class="sm" id="examTopic" style="display:none"></button><button class="sm" id="baseTopic" style="display:none">기초 학습 주제만</button><span class="muted" id="topicMsg"></span></div></div>
+      <div id="cntLbl">문항 수</div><div class="row" id="cntRow"><select id="cntSel"><option>10</option><option>20</option><option selected>30</option></select></div>
+      <div>선택</div><div class="row" style="gap:14px">
+        <label><input type="checkbox" id="optEx" checked> 전에 풀었던 문제(배부한 단어) 빼기</label>
+        <label><input type="checkbox" id="optAns" checked> 정답지 함께 만들기</label>
+        <label><input type="checkbox" id="optRec" checked> 인쇄·다운로드할 때 출제 기록 저장</label>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="pri" id="genBtn">문제 만들기</button></div>
+  </div>
+  <div class="card no-print">
+    <details id="batchBox"><summary>여러 학생 한꺼번에 만들기 <span class="muted">(학생마다 각자의 수준·특징·출제 기록을 반영)</span></summary>
+      <div style="margin-top:10px" class="grid2">
+        <div>학생</div><div><div class="row" id="batchStu"></div><div class="row" style="margin-top:4px"><button class="sm" id="batchAll">모두 선택</button><button class="sm" id="batchNone">선택 해제</button></div></div>
+        <div>과목</div><div class="row"><select id="batchSub"></select>
+          <span id="batchKindWrap"><label><input type="radio" name="bkind" value="quiz" checked> 문제지</label> <label><input type="radio" name="bkind" value="vocab"> 단어장</label></span></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="pri" id="batchBtn">선택한 학생 문제지 만들기</button></div>
+    </details>
+  </div>
+  <div class="card" id="outCard">
+    <div class="row no-print" id="outBar" style="margin-bottom:8px;display:none">
+      <button class="pri" id="printBtn">인쇄 / PDF 저장</button>
+      <button id="wordBtn">Word 파일 다운로드</button>
+      <button id="recBtn">출제 기록에 저장</button>
+      <button id="regenBtn">다시 만들기</button>
+      <span class="muted" id="recMsg"></span>
+    </div>
+    <div class="no-print" id="noteArea"></div>
+    <div id="previewWrap"><div class="empty">학생과 과목을 고르고 ‘문제 만들기’를 누르면 여기에 학습지가 나타나요.</div></div>
+  </div>
+</main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/* ===================== 공통 ===================== */
+const LV4=['기초','하','중','상'];
+const LV9=['초등 하','초등 중','초등 상','중1 하','중1 중','중1 상','중2 하','중2 중','중2 상'];
+const SUB_LIST=['국어','영어','수학','과학','역사'];
+const SUBJECTS={'국어':LV4,'영어':LV9,'수학':LV9,'과학':LV4,'역사':LV4};
+const CIRC=['①','②','③','④','⑤'];
+const M='−';
+const R={
+  ri:(a,b)=>a+Math.floor(Math.random()*(b-a+1)),
+  pick:a=>a[Math.floor(Math.random()*a.length)],
+  shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;},
+  sample(a,n){return R.shuffle(a).slice(0,n);},
+  nz(a,b){let v=0;while(v===0)v=R.ri(a,b);return v;}
+};
+const uniq=a=>[...new Set(a)];
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a;};
+const lcm=(a,b)=>a/gcd(a,b)*b;
+const num=n=>n<0?M+(-n):String(n);
+const pn=n=>n<0?'('+M+(-n)+')':String(n);
+const sgnd=n=>n<0?'('+M+(-n)+')':'(+'+n+')';
+function frac(n,d){if(d<0){n=-n;d=-d;}const g=gcd(n,d)||1;n/=g;d/=g;if(d===1)return num(n);return (n<0?M:'')+Math.abs(n)+'/'+d;}
+function fracMixed(n,d){ // 초등용: 약분 + 가분수면 대분수 병기
+  const g=gcd(n,d);n/=g;d/=g;if(d===1)return String(n);
+  if(n>d)return `${n}/${d} (= ${Math.floor(n/d)}과 ${n%d}/${d})`;return `${n}/${d}`;}
+function decStr(v,p){const neg=v<0;v=Math.abs(v);let s=String(v).padStart(p+1,'0');let ip=s.slice(0,s.length-p),fp=s.slice(s.length-p).replace(/0+$/,'');return (neg?M:'')+ip+(fp?'.'+fp:'');}
+const sup=(b,e)=>e===1?b:`${b}<sup>${e}</sup>`;
+function poly(terms){let s='';for(const [c,v] of terms){if(c===0)continue;const a=Math.abs(c);const body=v?((a===1?'':a)+v):String(a);if(s==='')s=(c<0?M:'')+body;else s+=(c<0?' '+M+' ':' + ')+body;}return s===''?'0':s;}
+function mono(c,v,e){if(c===0)return '0';const cs=c===1?'':c===-1?M:num(c);return cs+sup(v,e);}
+const FLIP={'>':'<','<':'>','≥':'≤','≤':'≥'};
+function nc(lv){const i4=LV4.indexOf(lv);if(i4>=0)return [3,4,4,5][i4];const i9=LV9.indexOf(lv);return i9<=1?3:(i9===8?5:4);}
+
+function mc(id,q,correct,distractors,n,exp){
+  const ds=uniq(distractors.filter(d=>d!==correct&&d!=null));
+  const opts=R.shuffle([correct,...R.sample(ds,Math.max(1,n-1))]);
+  if(opts.length<2)return null;
+  return {id,type:'mc',q,choices:opts,ans:opts.indexOf(correct),exp};
+}
+function mcFixed(id,q,choices,ansIdx,exp){return {id,type:'mc',q,choices,ans:ansIdx,exp};}
+function sa(id,q,ans,exp){return {id,type:'sa',q,ans:String(ans),exp};}
+const box=t=>`<div class="qbox">${t}</div>`;
+
+const GENS={'국어':[],'영어':[],'수학':[],'과학':[],'역사':[]};
+function G(sub,topic,levels,fn,w){GENS[sub].push({topic,levels,fn,w:w||1});}
+
+/* 4단계 과목: 해당 수준 70%, 아래 수준 30% */
+function lvIdx(lv){return LV4.indexOf(lv);}
+function pickLv(arr,lv,filter){
+  const L=lvIdx(lv);const a=filter?arr.filter(filter):arr;
+  const ex=a.filter(x=>lvIdx(x.lv)===L),lo=a.filter(x=>lvIdx(x.lv)<L);
+  if(ex.length&&(!lo.length||Math.random()<0.7))return R.pick(ex);
+  if(lo.length)return R.pick(lo);return null;
+}
+const upTo=(arr,lv,plus)=>arr.filter(x=>lvIdx(x.lv)<=lvIdx(lv)+(plus||0));
+
+/* ===================== 생성 엔진 ===================== */
+function topicsFor(sub,lv){return uniq(GENS[sub].filter(g=>g.levels.includes(lv)).map(g=>g.topic));}
+function generate(sub,lv,opt){
+  const n=opt.n||30,exclude=opt.exclude||new Set();
+  let gens=GENS[sub].filter(g=>g.levels.includes(lv));
+  if(opt.topics&&opt.topics.length)gens=gens.filter(g=>opt.topics.includes(g.topic));
+  const notes=[];
+  if(!gens.length)return {items:[],notes:['선택한 주제에 해당하는 문항이 없습니다.']};
+  const byT={};gens.forEach(g=>{(byT[g.topic]=byT[g.topic]||[]).push(g);});
+  const topics=Object.keys(byT);
+  const items=[],ids=new Set(),gcnt=new Map();const cap=Math.max(2,Math.ceil(n/gens.length)+1);
+  const run=(useEx)=>{
+    const fails={};let ti=0,att=0;
+    while(items.length<n&&att<n*400){
+      att++;const live=topics.filter(t=>(fails[t]||0)<150);if(!live.length)break;
+      const t=live[ti++%live.length];const gs=byT[t];
+      const tot=gs.reduce((s,g)=>s+g.w,0);let r=Math.random()*tot,g=gs[0];
+      for(const x of gs){r-=x.w;if(r<=0){g=x;break;}}
+      if((gcnt.get(g)||0)>=cap&&att<n*200){fails[t]=(fails[t]||0)+1;continue;}
+      let it=null;try{it=g.fn(lv);}catch(e){it=null;}
+      if(!it||ids.has(it.id)||(useEx&&exclude.has(it.id))){fails[t]=(fails[t]||0)+1;continue;}
+      fails[t]=0;gcnt.set(g,(gcnt.get(g)||0)+1);it.topic=t;if(!useEx)it.reused=exclude.has(it.id);ids.add(it.id);items.push(it);
+    }
+  };
+  run(true);
+  if(items.length<n&&exclude.size){const before=items.length;run(false);const k=items.filter(x=>x.reused).length;if(k)notes.push(`새 문항이 부족해서 이전에 출제한 문항 ${k}개를 다시 넣었어요. 주제를 더 선택하거나 다른 수준을 골라 보세요.`);}
+  if(items.length<n)notes.push(`선택한 주제에서 만들 수 있는 문항이 ${items.length}개뿐이에요. 주제를 더 선택해 주세요.`);
+  const order=topics;items.sort((a,b)=>order.indexOf(a.topic)-order.indexOf(b.topic));
+  return {items,notes};
+}
+
+/* ===================== 수학 ===================== */
+const NAMES=['민수','지아','하나','유나','수아','지호','도하','서아'];
+const MS='수학';
+// 초등 하
+G(MS,'덧셈',['초등 하'],()=>{const a=R.ri(12,79),b=R.ri(12,99-a);return sa(`m-add-${a}-${b}`,`${a} + ${b} =`,a+b);});
+G(MS,'뺄셈',['초등 하'],()=>{const a=R.ri(31,99),b=R.ri(11,a-5);return sa(`m-sub-${a}-${b}`,`${a} ${M} ${b} =`,a-b);});
+G(MS,'곱셈구구',['초등 하'],()=>{const a=R.ri(2,9),b=R.ri(2,9);return sa(`m-gugu-${a}-${b}`,`${a} × ${b} =`,a*b);});
+G(MS,'세 자리 수 계산',['초등 하'],()=>{let a=R.ri(101,699),b=R.ri(101,299);if(Math.random()<0.5)return sa(`m-3add-${a}-${b}`,`${a} + ${b} =`,a+b);if(a<b)[a,b]=[b,a];if(a===b)return null;return sa(`m-3sub-${a}-${b}`,`${a} ${M} ${b} =`,a-b);});
+G(MS,'문장제',['초등 하'],()=>{const nm=R.pick(NAMES),t=R.ri(1,3);
+  if(t===1){const a=R.ri(12,60),b=R.ri(5,30);return sa(`m-w1-${a}-${b}`,`${nm}는 구슬을 ${a}개 가지고 있었는데, 친구에게 ${b}개를 더 받았습니다. ${nm}가 가진 구슬은 모두 몇 개인가요?`,`${a+b}개`);}
+  if(t===2){const a=R.ri(20,60),b=R.ri(5,a-3);return sa(`m-w2-${a}-${b}`,`바구니에 귤이 ${a}개 있었습니다. 그중 ${b}개를 먹었다면 남은 귤은 몇 개인가요?`,`${a-b}개`);}
+  const a=R.ri(2,9),b=R.ri(2,9);return sa(`m-w3-${a}-${b}`,`한 상자에 연필이 ${a}자루씩 들어 있습니다. ${b}상자에 들어 있는 연필은 모두 몇 자루인가요?`,`${a*b}자루`);});
+// 초등 중
+G(MS,'곱셈',['초등 중'],()=>{if(Math.random()<0.5){const a=R.ri(12,98),b=R.ri(3,9);return sa(`m-mul21-${a}-${b}`,`${a} × ${b} =`,a*b);}const a=R.ri(12,49),b=R.ri(11,29);return sa(`m-mul22-${a}-${b}`,`${a} × ${b} =`,a*b);});
+G(MS,'나눗셈',['초등 중'],()=>{const b=R.ri(3,9),q=R.ri(4,15),r=R.ri(0,b-1),a=b*q+r;if(r===0)return sa(`m-div-${a}-${b}`,`${a} ÷ ${b} =`,q);return sa(`m-divr-${a}-${b}`,`${a} ÷ ${b}의 몫과 나머지를 구하세요.`,`몫 ${q}, 나머지 ${r}`);});
+G(MS,'분수',['초등 중'],()=>{const d=R.ri(5,12);if(Math.random()<0.5){const n1=R.ri(1,d-2),n2=R.ri(1,d-1-n1);const g=gcd(n1+n2,d);return sa(`m-fsa-${n1}-${n2}-${d}`,`${n1}/${d} + ${n2}/${d} =`,`${n1+n2}/${d}`+(g>1?` (약분하면 ${frac(n1+n2,d)})`:''));}
+  const n1=R.ri(2,d-1),n2=R.ri(1,n1-1);const g=gcd(n1-n2,d);return sa(`m-fss-${n1}-${n2}-${d}`,`${n1}/${d} ${M} ${n2}/${d} =`,`${n1-n2}/${d}`+(g>1?` (약분하면 ${frac(n1-n2,d)})`:''));});
+G(MS,'소수',['초등 중'],()=>{let a=R.ri(11,89),b=R.ri(11,89);if(Math.random()<0.5)return sa(`m-dadd-${a}-${b}`,`${decStr(a,1)} + ${decStr(b,1)} =`,decStr(a+b,1));if(a<b)[a,b]=[b,a];if(a===b)return null;return sa(`m-dsub-${a}-${b}`,`${decStr(a,1)} ${M} ${decStr(b,1)} =`,decStr(a-b,1));});
+G(MS,'혼합 계산',['초등 중'],()=>{const t=R.ri(1,4),a=R.ri(2,30),b=R.ri(2,9),c=R.ri(2,9);
+  if(t===1)return sa(`m-mix1-${a}-${b}-${c}`,`${a} + ${b} × ${c} =`,a+b*c);
+  if(t===2)return sa(`m-mix2-${a}-${b}-${c}`,`(${a} + ${b}) × ${c} =`,(a+b)*c);
+  if(t===3){const A=b*c+R.ri(1,30);return sa(`m-mix3-${A}-${b}-${c}`,`${A} ${M} ${b} × ${c} =`,A-b*c);}
+  const B=c*R.ri(2,9);return sa(`m-mix4-${a}-${B}-${c}`,`${a} + ${B} ÷ ${c} =`,a+B/c);});
+G(MS,'문장제',['초등 중'],()=>{const t=R.ri(1,3);
+  if(t===1){const b=R.ri(3,8),q=R.ri(3,12);return sa(`m-w4-${b}-${q}`,`쿠키 ${b*q}개를 ${b}명이 똑같이 나누어 먹으려고 합니다. 한 명이 몇 개씩 먹을 수 있나요?`,`${q}개`);}
+  if(t===2){const b=R.ri(3,9),q=R.ri(4,12);return sa(`m-w5-${b}-${q}`,`길이가 ${b*q}cm인 끈을 ${b}cm씩 자르면 모두 몇 도막이 되나요?`,`${q}도막`);}
+  const a=R.ri(12,40),b=R.ri(3,9);return sa(`m-w6-${a}-${b}`,`한 봉지에 사탕이 ${a}개씩 들어 있습니다. ${b}봉지에 들어 있는 사탕은 모두 몇 개인가요?`,`${a*b}개`);});
+// 초등 상
+G(MS,'약수와 배수',['초등 상'],()=>{if(Math.random()<0.5){const g=R.ri(2,12);let m=R.ri(2,7),n=R.ri(2,7);if(m===n||gcd(m,n)!==1)return null;return sa(`m-gcd-${g*m}-${g*n}`,`두 수 ${g*m}, ${g*n}의 최대공약수를 구하세요.`,g);}
+  const a=R.ri(4,18),b=R.ri(4,18);if(a===b||lcm(a,b)>150)return null;return sa(`m-lcm-${a}-${b}`,`두 수 ${a}, ${b}의 최소공배수를 구하세요.`,lcm(a,b));});
+G(MS,'분수',['초등 상'],()=>{const t=R.ri(1,3);
+  if(t<=2){const d1=R.ri(2,9),d2=R.ri(2,9);if(d1===d2)return null;const n1=R.ri(1,d1-1),n2=R.ri(1,d2-1);
+    if(t===1)return sa(`m-fda-${n1}-${d1}-${n2}-${d2}`,`${n1}/${d1} + ${n2}/${d2} =`,fracMixed(n1*d2+n2*d1,d1*d2));
+    const v=n1*d2-n2*d1;if(v<=0)return null;return sa(`m-fds-${n1}-${d1}-${n2}-${d2}`,`${n1}/${d1} ${M} ${n2}/${d2} =`,fracMixed(v,d1*d2));}
+  const d1=R.ri(2,9),d2=R.ri(2,9),n1=R.ri(1,d1-1),n2=R.ri(1,d2-1);return sa(`m-fm-${n1}-${d1}-${n2}-${d2}`,`${n1}/${d1} × ${n2}/${d2} =`,fracMixed(n1*n2,d1*d2));});
+G(MS,'소수',['초등 상'],()=>{if(Math.random()<0.5){const a=R.ri(11,99),b=R.ri(2,9);return sa(`m-dm1-${a}-${b}`,`${decStr(a,1)} × ${b} =`,decStr(a*b,1));}
+  const a=R.ri(2,19),b=R.ri(2,9);if(a%10===0)return null;return sa(`m-dm2-${a}-${b}`,`${decStr(a,1)} × ${decStr(b,1)} =`,decStr(a*b,2));});
+G(MS,'비와 비율',['초등 상'],()=>{if(Math.random()<0.5){const tot=R.pick([20,25,40,50]),p=R.ri(1,tot-1);if((p*100)%tot)return null;return sa(`m-pct-${tot}-${p}`,`반 학생 ${tot}명 중 ${p}명이 안경을 썼습니다. 안경을 쓴 학생의 비율은 몇 %인가요?`,`${p*100/tot}%`);}
+  const a=R.ri(1,9),b=R.ri(2,12);if(a===b)return null;return sa(`m-ratio-${a}-${b}`,`비 ${a} : ${b}의 비율을 기약분수로 나타내세요.`,frac(a,b));});
+G(MS,'도형',['초등 상'],()=>{const t=R.ri(1,4),w=R.ri(3,15),h=R.ri(2,12);
+  if(t===1)return sa(`m-recA-${w}-${h}`,`가로 ${w}cm, 세로 ${h}cm인 직사각형의 넓이는 몇 cm²인가요?`,`${w*h}cm²`);
+  if(t===2)return sa(`m-recP-${w}-${h}`,`가로 ${w}cm, 세로 ${h}cm인 직사각형의 둘레는 몇 cm인가요?`,`${2*(w+h)}cm`);
+  if(t===3){if((w*h)%2)return null;return sa(`m-triA-${w}-${h}`,`밑변이 ${w}cm, 높이가 ${h}cm인 삼각형의 넓이는 몇 cm²인가요?`,`${w*h/2}cm²`);}
+  return sa(`m-sqA-${w}`,`한 변의 길이가 ${w}cm인 정사각형의 넓이는 몇 cm²인가요?`,`${w*w}cm²`);});
+G(MS,'평균',['초등 상'],()=>{const m=R.ri(10,90);const d=[R.ri(-8,8),R.ri(-8,8),R.ri(-8,8)];d.push(-(d[0]+d[1]+d[2]));const v=d.map(x=>m+x);if(v.some(x=>x<=0))return null;return sa(`m-avg-${v.join('-')}`,`${v.join(', ')}의 평균을 구하세요.`,m);});
+G(MS,'문장제',['초등 상'],()=>{if(Math.random()<0.5){const q=R.ri(2,8),p=R.ri(1,q-1);if(gcd(p,q)!==1)return null;const a=q*R.ri(2,9);return sa(`m-w7-${a}-${p}-${q}`,`길이가 ${a}m인 끈의 ${p}/${q}를 사용했습니다. 사용한 끈은 몇 m인가요?`,`${a*p/q}m`);}
+  const x=R.ri(2,9),n=R.ri(2,9);return sa(`m-w8-${x}-${n}`,`한 병에 ${decStr(x,1)}L씩 들어 있는 주스가 ${n}병 있습니다. 주스는 모두 몇 L인가요?`,`${decStr(x*n,1)}L`);});
+// 중1 하
+G(MS,'정수의 덧셈과 뺄셈',['중1 하'],()=>{const a=R.nz(-15,15),b=R.nz(-15,15);if(Math.random()<0.5)return sa(`m-ia-${a}-${b}`,`${sgnd(a)} + ${sgnd(b)} =`,num(a+b));return sa(`m-is-${a}-${b}`,`${sgnd(a)} ${M} ${sgnd(b)} =`,num(a-b));});
+G(MS,'소인수분해',['중1 하'],()=>{const ps=[2,3,5,7],ex=[R.ri(0,4),R.ri(0,3),R.ri(0,2),R.ri(0,1)];let n=1;ps.forEach((p,i)=>n*=p**ex[i]);if(n<12||n>400||ex.filter(e=>e>0).length<2)return null;
+  const ans=ps.map((p,i)=>ex[i]?sup(String(p),ex[i]):null).filter(Boolean).join(' × ');return sa(`m-pf-${n}`,`${n}을(를) 소인수분해 하세요.`,ans);});
+G(MS,'문자와 식',['중1 하'],()=>{const x=R.nz(-5,5),p=R.nz(-6,6),q=R.nz(-9,9);return sa(`m-sub1-${x}-${p}-${q}`,`x = ${num(x)}일 때, ${poly([[p,'x'],[q,'']])}의 값을 구하세요.`,num(p*x+q));});
+G(MS,'일차방정식',['중1 하'],()=>{const x=R.ri(-10,10);if(Math.random()<0.5){const a=R.nz(-10,10);return sa(`m-eq1-${a}-${x}`,`방정식을 푸세요. ${poly([[1,'x'],[a,'']])} = ${num(x+a)}`,`x = ${num(x)}`);}
+  const a=R.nz(-9,9);if(Math.abs(a)===1)return null;return sa(`m-eq2-${a}-${x}`,`방정식을 푸세요. ${poly([[a,'x']])} = ${num(a*x)}`,`x = ${num(x)}`);});
+G(MS,'최대공약수와 최소공배수',['중1 하'],()=>{const g=R.ri(2,15);const m=R.ri(2,7),n=R.ri(2,7);if(m===n||gcd(m,n)!==1)return null;const a=g*m,b=g*n;if(Math.random()<0.5)return sa(`m-gcd2-${a}-${b}`,`두 수 ${a}, ${b}의 최대공약수를 구하세요.`,g);return sa(`m-lcm2-${a}-${b}`,`두 수 ${a}, ${b}의 최소공배수를 구하세요.`,lcm(a,b));});
+// 중1 중
+G(MS,'정수의 곱셈과 나눗셈',['중1 중'],()=>{const t=R.ri(1,3);
+  if(t===1){const a=R.nz(-12,12),b=R.nz(-9,9);return sa(`m-im-${a}-${b}`,`${sgnd(a)} × ${sgnd(b)} =`,num(a*b));}
+  if(t===2){const b=R.nz(-9,9),q=R.nz(-9,9);if(Math.abs(b)===1)return null;return sa(`m-id-${b*q}-${b}`,`${sgnd(b*q)} ÷ ${sgnd(b)} =`,num(q));}
+  const a=R.nz(-5,5),b=R.nz(-5,5),c=R.nz(-5,5);return sa(`m-im3-${a}-${b}-${c}`,`${sgnd(a)} × ${sgnd(b)} × ${sgnd(c)} =`,num(a*b*c));});
+G(MS,'정수의 혼합 계산',['중1 중'],()=>{const a=R.nz(-12,12),b=R.nz(-6,6),c=R.nz(-6,6);if(Math.random()<0.5)return sa(`m-imx1-${a}-${b}-${c}`,`${pn(a)} + ${pn(b)} × ${pn(c)} =`,num(a+b*c));return sa(`m-imx2-${a}-${b}-${c}`,`${pn(b)} × ${pn(c)} ${M} ${pn(a)} =`,num(b*c-a));});
+G(MS,'일차식의 계산',['중1 중'],()=>{const t=R.ri(1,4),a=R.nz(-7,7),b=R.nz(-9,9),c=R.nz(-7,7),d=R.nz(-9,9);const P=poly([[a,'x'],[b,'']]),Q=poly([[c,'x'],[d,'']]);
+  if(t===1)return sa(`m-le1-${a}-${b}-${c}-${d}`,`(${P}) + (${Q})를 간단히 하세요.`,poly([[a+c,'x'],[b+d,'']]));
+  if(t===2)return sa(`m-le2-${a}-${b}-${c}-${d}`,`(${P}) ${M} (${Q})를 간단히 하세요.`,poly([[a-c,'x'],[b-d,'']]));
+  if(t===3){const k=R.nz(-5,5);if(Math.abs(k)===1)return null;return sa(`m-le3-${k}-${a}-${b}`,`${num(k)}(${P})를 간단히 하세요.`,poly([[k*a,'x'],[k*b,'']]));}
+  const k=R.ri(2,5);return sa(`m-le4-${k}-${a}-${b}`,`(${poly([[k*a,'x'],[k*b,'']])}) ÷ ${k}를 간단히 하세요.`,P);});
+G(MS,'일차방정식',['중1 중'],()=>{const x=R.ri(-9,9),a=R.nz(-9,9),b=R.nz(-15,15);if(Math.abs(a)===1)return null;return sa(`m-eq3-${a}-${b}-${x}`,`방정식을 푸세요. ${poly([[a,'x'],[b,'']])} = ${num(a*x+b)}`,`x = ${num(x)}`);});
+G(MS,'좌표평면',['중1 중'],()=>{const a=R.nz(-9,9),b=R.nz(-9,9);const qd=a>0?(b>0?0:3):(b>0?1:2);return mcFixed(`m-quad-${a}-${b}`,`점 (${num(a)}, ${num(b)})은(는) 제몇 사분면 위의 점인가요?`,['제1사분면','제2사분면','제3사분면','제4사분면'],qd);});
+G(MS,'정비례와 반비례',['중1 중'],()=>{const a=R.nz(-6,6),p=R.nz(-5,5);if(Math.abs(a)===1)return null;if(Math.random()<0.5)return sa(`m-prop1-${a}-${p}`,`y = ax의 그래프가 점 (${num(p)}, ${num(a*p)})을(를) 지날 때, 상수 a의 값을 구하세요.`,num(a));
+  const r=R.nz(-6,6);if(r===p)return null;return sa(`m-prop2-${a}-${p}-${r}`,`y가 x에 정비례하고, x = ${num(p)}일 때 y = ${num(a*p)}입니다. x = ${num(r)}일 때 y의 값을 구하세요.`,num(a*r));});
+// 중1 상
+G(MS,'일차방정식',['중1 상'],()=>{const x=R.ri(-8,8),t=R.ri(1,3);
+  if(t===1){const a=R.nz(-6,8),c=R.nz(-6,8);if(a===c)return null;const b=R.ri(-12,12),d=a*x+b-c*x;return sa(`m-eq4-${a}-${b}-${c}-${d}`,`방정식을 푸세요. ${poly([[a,'x'],[b,'']])} = ${poly([[c,'x'],[d,'']])}`,`x = ${num(x)}`);}
+  if(t===2){const a=R.ri(2,6),b=R.nz(-7,7);return sa(`m-eq5-${a}-${b}-${x}`,`방정식을 푸세요. ${a}(${poly([[1,'x'],[b,'']])}) = ${num(a*(x+b))}`,`x = ${num(x)}`);}
+  const a=R.ri(2,6),tt=R.ri(-5,6),b=R.nz(-9,9),X=a*tt;return sa(`m-eq6-${a}-${b}-${tt}`,`방정식을 푸세요. x/${a} ${b<0?M+' '+(-b):'+ '+b} = ${num(tt+b)}`,`x = ${num(X)}`);});
+G(MS,'방정식의 활용',['중1 상'],()=>{const t=R.ri(1,4);
+  if(t===1){const x=R.ri(2,20),k=R.ri(2,7),m=R.ri(1,20);return sa(`m-ap1-${x}-${k}-${m}`,`어떤 수의 ${k}배에 ${m}을(를) 더하면 ${k*x+m}이(가) 됩니다. 어떤 수를 구하세요.`,x);}
+  if(t===2){const n=R.ri(5,40);return sa(`m-ap2-${n}`,`연속하는 세 자연수의 합이 ${3*n+3}일 때, 가장 작은 수를 구하세요.`,n);}
+  if(t===3){const a=R.ri(3,8)*100,b=a+R.ri(2,6)*100,n=R.ri(5,12),y=R.ri(1,n-1);const T=(n-y)*a+y*b;return sa(`m-ap3-${a}-${b}-${n}-${y}`,`한 자루에 ${a}원인 연필과 한 자루에 ${b}원인 볼펜을 합하여 ${n}자루 사고 ${T.toLocaleString()}원을 냈습니다. 볼펜은 몇 자루 샀나요?`,`${y}자루`);}
+  const S=R.ri(12,16),y=R.ri(6,14),F=2*S+y;return sa(`m-ap4-${S}-${y}`,`현재 아들은 ${S}살, 아버지는 ${F}살입니다. 몇 년 후에 아버지의 나이가 아들 나이의 2배가 되나요?`,`${y}년 후`);});
+G(MS,'유리수의 계산',['중1 상'],()=>{const d1=R.ri(2,6),d2=R.ri(2,6),n1=R.nz(-5,5),n2=R.nz(-5,5);if(gcd(n1,d1)!==1||gcd(n2,d2)!==1)return null;const f=(n,d)=>`(${n<0?M:'+'}${Math.abs(n)}/${d})`;
+  if(Math.random()<0.5)return sa(`m-ra-${n1}-${d1}-${n2}-${d2}`,`${f(n1,d1)} + ${f(n2,d2)} =`,frac(n1*d2+n2*d1,d1*d2));return sa(`m-rm-${n1}-${d1}-${n2}-${d2}`,`${f(n1,d1)} × ${f(n2,d2)} =`,frac(n1*n2,d1*d2));});
+G(MS,'정비례와 반비례',['중1 상'],()=>{const p=R.nz(-6,6),q=R.nz(-6,6);if(Math.abs(p*q)<2)return null;return sa(`m-inv-${p}-${q}`,`y = a/x의 그래프가 점 (${num(p)}, ${num(q)})을(를) 지날 때, 상수 a의 값을 구하세요.`,num(p*q));});
+// 중2 하
+const FIN=[2,4,5,8,10,16,20,25,40,50],NFIN=[3,6,7,9,11,12,13,14,15,18,21,22,24,30];
+const coprimeN=d=>{const c=[];for(let i=1;i<d;i++)if(gcd(i,d)===1)c.push(i);return R.pick(c);};
+G(MS,'유한소수와 순환소수',['중2 하'],()=>{if(Math.random()<0.5){const d=R.pick(FIN),n=coprimeN(d);const ds=R.sample(NFIN,3).map(x=>`${coprimeN(x)}/${x}`);return mc(`m-fin-${n}-${d}`,`다음 분수 중 유한소수로 나타낼 수 있는 것은?`,`${n}/${d}`,ds,4);}
+  const d=R.pick(FIN),n=coprimeN(d);let p=0;while((10**p)%d)p++;return sa(`m-fdec-${n}-${d}`,`분수 ${n}/${d}을(를) 소수로 나타내세요.`,decStr(n*(10**p)/d,p));});
+G(MS,'유한소수와 순환소수',['중2 하'],()=>{const a=R.ri(1,8);return sa(`m-rep1-${a}`,`순환소수 0.${a}${a}${a}${a}…을(를) 기약분수로 나타내세요.`,frac(a,9));},0.5);
+G(MS,'지수법칙',['중2 하'],()=>{const v=R.pick(['a','x','y']),t=R.ri(1,3);
+  if(t===1){const m=R.ri(2,6),n=R.ri(2,6);return sa(`m-ex1-${v}-${m}-${n}`,`${sup(v,m)} × ${sup(v,n)}을(를) 간단히 하세요.`,sup(v,m+n));}
+  if(t===2){const m=R.ri(2,5),n=R.ri(2,4);return sa(`m-ex2-${v}-${m}-${n}`,`(${sup(v,m)})<sup>${n}</sup>을(를) 간단히 하세요.`,sup(v,m*n));}
+  const n=R.ri(2,5),m=n+R.ri(1,5);return sa(`m-ex3-${v}-${m}-${n}`,`${sup(v,m)} ÷ ${sup(v,n)}을(를) 간단히 하세요.`,sup(v,m-n));});
+G(MS,'단항식의 계산',['중2 하'],()=>{const P=(c,e)=>c<0?`(${mono(c,'x',e)})`:mono(c,'x',e);
+  if(Math.random()<0.5){const p=R.nz(-6,6),q=R.nz(-6,6),m=R.ri(1,4),n=R.ri(1,4);if(Math.abs(p)===1||Math.abs(q)===1)return null;return sa(`m-mo1-${p}-${m}-${q}-${n}`,`${P(p,m)} × ${P(q,n)}을(를) 계산하세요.`,mono(p*q,'x',m+n));}
+  const q=R.nz(-6,6),k=R.nz(-6,6),n=R.ri(1,3),m=n+R.ri(1,4);if(Math.abs(q)===1)return null;return sa(`m-mo2-${q*k}-${m}-${q}-${n}`,`${P(q*k,m)} ÷ ${P(q,n)}을(를) 계산하세요.`,mono(k,'x',m-n));});
+G(MS,'다항식의 계산',['중2 하'],()=>{const a=R.nz(-7,7),b=R.nz(-7,7),c=R.nz(-7,7),d=R.nz(-7,7);const P=poly([[a,'x'],[b,'y']]),Q=poly([[c,'x'],[d,'y']]);
+  if(Math.random()<0.5)return sa(`m-pl1-${a}-${b}-${c}-${d}`,`(${P}) + (${Q})를 간단히 하세요.`,poly([[a+c,'x'],[b+d,'y']]));return sa(`m-pl2-${a}-${b}-${c}-${d}`,`(${P}) ${M} (${Q})를 간단히 하세요.`,poly([[a-c,'x'],[b-d,'y']]));});
+G(MS,'일차부등식',['중2 하'],()=>{const op=R.pick(['>','<','≥','≤']);if(Math.random()<0.5){const a=R.nz(-9,9),b=R.ri(-10,10);return sa(`m-in1-${a}-${b}-${op}`,`부등식을 푸세요. ${poly([[1,'x'],[a,'']])} ${op} ${num(b)}`,`x ${op} ${num(b-a)}`);}
+  const a=R.ri(2,6),k=R.ri(-6,6);return sa(`m-in2-${a}-${k}-${op}`,`부등식을 푸세요. ${a}x ${op} ${num(a*k)}`,`x ${op} ${num(k)}`);});
+// 중2 중
+G(MS,'일차부등식',['중2 중'],()=>{const op=R.pick(['>','<','≥','≤']),a=R.nz(-6,6),b=R.nz(-9,9),k=R.ri(-6,6);if(Math.abs(a)===1)return null;const c=a*k+b;return sa(`m-in3-${a}-${b}-${c}-${op}`,`부등식을 푸세요. ${poly([[a,'x'],[b,'']])} ${op} ${num(c)}`,`x ${a<0?FLIP[op]:op} ${num(k)}`,a<0?'음수로 나누면 부등호 방향이 바뀝니다.':'');});
+const sys=(l1,l2)=>`<div class="sys">${l1}<br>${l2}</div>`;
+G(MS,'연립방정식',['중2 중'],()=>{const x=R.ri(-5,6),y=R.ri(-5,6);
+  if(Math.random()<0.4)return sa(`m-sy1-${x}-${y}`,`다음 연립방정식을 푸세요.`+sys(`x + y = ${num(x+y)}`,`x ${M} y = ${num(x-y)}`),`x = ${num(x)}, y = ${num(y)}`);
+  const a1=R.nz(-5,5),b1=R.nz(-5,5),a2=R.nz(-5,5),b2=R.nz(-5,5);if(a1*b2-a2*b1===0)return null;
+  return sa(`m-sy2-${a1}-${b1}-${a2}-${b2}-${x}-${y}`,`다음 연립방정식을 푸세요.`+sys(`${poly([[a1,'x'],[b1,'y']])} = ${num(a1*x+b1*y)}`,`${poly([[a2,'x'],[b2,'y']])} = ${num(a2*x+b2*y)}`),`x = ${num(x)}, y = ${num(y)}`);});
+G(MS,'일차함수',['중2 중'],()=>{const a=R.nz(-5,5),t=R.ri(1,4);let b=R.ri(-8,8);const F=`y = ${poly([[a,'x'],[b,'']])}`;
+  if(t===1)return sa(`m-lf1-${a}-${b}`,`일차함수 ${F}의 그래프의 기울기를 구하세요.`,num(a));
+  if(t===2)return sa(`m-lf2-${a}-${b}`,`일차함수 ${F}의 그래프의 y절편을 구하세요.`,num(b));
+  if(t===3){const k=R.ri(-4,4);b=-a*k;return sa(`m-lf3-${a}-${b}`,`일차함수 y = ${poly([[a,'x'],[b,'']])}의 그래프의 x절편을 구하세요.`,num(k));}
+  const k=R.ri(-4,5);return sa(`m-lf4-${a}-${b}-${k}`,`일차함수 f(x) = ${poly([[a,'x'],[b,'']])}에서 f(${num(k)})의 값을 구하세요.`,num(a*k+b));});
+G(MS,'식의 대입',['중2 중'],()=>{const x=R.nz(-5,5),y=R.nz(-5,5),p=R.nz(-5,5),q=R.nz(-5,5),r=R.ri(-9,9);return sa(`m-sub2-${x}-${y}-${p}-${q}-${r}`,`x = ${num(x)}, y = ${num(y)}일 때, ${poly([[p,'x'],[q,'y'],[r,'']])}의 값을 구하세요.`,num(p*x+q*y+r));});
+// 중2 상
+G(MS,'연립방정식의 활용',['중2 상'],()=>{const t=R.ri(1,3);
+  if(t===1){const n=R.ri(8,30),r=R.ri(1,n-1);return sa(`m-sa1-${n}-${r}`,`닭과 토끼가 모두 ${n}마리 있고, 다리 수의 합은 ${2*(n-r)+4*r}개입니다. 토끼는 몇 마리인가요?`,`${r}마리`);}
+  if(t===2){const y=R.ri(3,40),x=y+R.ri(2,30);return sa(`m-sa2-${x}-${y}`,`두 수의 합은 ${x+y}이고 차는 ${x-y}입니다. 두 수 중 큰 수를 구하세요.`,x);}
+  const a=R.ri(5,12)*100,b=R.ri(5,15)*100;if(a===b)return null;const n=R.ri(5,14),s=R.ri(1,n-1);const T=s*a+(n-s)*b;return sa(`m-sa3-${a}-${b}-${n}-${s}`,`한 개에 ${a}원인 사과와 한 개에 ${b}원인 배를 합하여 ${n}개 사고 ${T.toLocaleString()}원을 냈습니다. 사과는 몇 개 샀나요?`,`${s}개`);});
+G(MS,'일차함수',['중2 상'],()=>{const a=R.nz(-4,4),b=R.ri(-6,6);const ans=`y = ${poly([[a,'x'],[b,'']])}`;
+  if(Math.random()<0.5){const x1=R.ri(-3,4),x2=R.ri(-3,4);if(x1===x2)return null;return sa(`m-lf5-${a}-${b}-${x1}-${x2}`,`두 점 (${num(x1)}, ${num(a*x1+b)}), (${num(x2)}, ${num(a*x2+b)})를 지나는 직선을 그래프로 하는 일차함수의 식을 구하세요.`,ans);}
+  const p=R.ri(-3,4);return sa(`m-lf6-${a}-${b}-${p}`,`기울기가 ${num(a)}이고 점 (${num(p)}, ${num(a*p+b)})를 지나는 일차함수의 식을 구하세요.`,ans);});
+G(MS,'일차부등식의 활용',['중2 상'],()=>{if(Math.random()<0.5){const p=R.pick([500,700,800,1200,1500]),box=R.pick([1000,2000,3000]),k=R.ri(3,12),B=box+p*k+R.ri(0,p-100);const rb=Math.round(B/100)*100;const ans=Math.floor((rb-box)/p);if(ans<1)return null;
+    return sa(`m-ia1-${p}-${box}-${rb}`,`한 개에 ${p}원인 빵을 사서 ${box.toLocaleString()}원짜리 상자에 담으려고 합니다. 전체 금액을 ${rb.toLocaleString()}원 이하로 하려면 빵은 최대 몇 개까지 살 수 있나요?`,`${ans}개`);}
+  const k=R.ri(2,6),m=R.ri(1,15),r=R.ri(5,40);const ans=Math.ceil((r+m)/k)-1;return sa(`m-ia2-${k}-${m}-${r}`,`어떤 정수의 ${k}배에서 ${m}을(를) 뺀 수는 ${r}보다 작습니다. 이를 만족하는 가장 큰 정수를 구하세요.`,num(ans));});
+G(MS,'등식의 변형',['중2 상'],()=>{const b=R.pick([1,-1,2,-2,3,-3]),k1=R.nz(-5,5),k2=R.ri(-6,6);const a=b*k1,c=b*k2;return sa(`m-tr-${a}-${b}-${c}`,`${poly([[a,'x'],[b,'y']])} = ${num(c)}을(를) y에 대하여 푸세요.`,`y = ${poly([[-k1,'x'],[k2,'']])}`);});
+G(MS,'유한소수와 순환소수',['중2 상'],()=>{const t=R.ri(1,3);
+  if(t===1){const v=R.ri(1,98),dd=String(v).padStart(2,'0');if(dd[0]===dd[1])return null;return sa(`m-rep2-${dd}`,`순환소수 0.${dd}${dd}${dd}…을(를) 기약분수로 나타내세요.`,frac(v,99));}
+  if(t===2){const a=R.ri(1,9),b=R.ri(1,9);if(a===b)return null;return sa(`m-rep3-${a}-${b}`,`순환소수 0.${a}${b}${b}${b}…을(를) 기약분수로 나타내세요.`,frac(9*a+b,90));}
+  const d=R.pick(FIN.filter(x=>x>2)),n=coprimeN(d),k=R.pick([3,7,9]);const ds=R.sample(NFIN,3).map(x=>`${coprimeN(x)}/${x}`);return mc(`m-fin2-${n*k}-${d*k}`,`다음 분수 중 유한소수로 나타낼 수 있는 것은?`,`${n*k}/${d*k}`,ds,5,`${n*k}/${d*k}을(를) 약분하면 ${n}/${d}로 분모의 소인수가 2나 5뿐입니다.`);});
+
+/* ===================== 영어 ===================== */
+const ES='영어';
+const WRAW={
+'초등 하':`apple|사과|애플;banana|바나나|버내너;orange|오렌지|오린지;milk|우유|밀크;water|물|워터;bread|빵|브레드;egg|달걀|에그;cat|고양이|캣;dog|개|도그;bird|새|버드;fish|물고기|피시;pig|돼지|피그;cow|소|카우;duck|오리|덕;lion|사자|라이언;tiger|호랑이|타이거;bear|곰|베어;rabbit|토끼|래빗;monkey|원숭이|멍키;red|빨간색|레드;blue|파란색|블루;yellow|노란색|옐로우;green|초록색|그린;black|검은색|블랙;white|흰색|와이트;pink|분홍색|핑크;one|하나, 1|원;two|둘, 2|투;three|셋, 3|쓰리;four|넷, 4|포;five|다섯, 5|파이브;six|여섯, 6|식스;seven|일곱, 7|세븐;eight|여덟, 8|에잇;nine|아홉, 9|나인;ten|열, 10|텐;mom|엄마|맘;dad|아빠|대드;baby|아기|베이비;boy|소년|보이;girl|소녀|걸;book|책|북;pen|펜|펜;bag|가방|백;desk|책상|데스크;chair|의자|체어;ball|공|볼;cup|컵|컵;doll|인형|돌;hat|모자|햇;shoe|신발|슈;sun|해, 태양|선;moon|달|문;star|별|스타;tree|나무|트리;flower|꽃|플라워;car|자동차|카;bus|버스|버스;eye|눈(신체)|아이;ear|귀|이어;nose|코|노즈;mouth|입|마우스;hand|손|핸드;foot|발|풋;head|머리|헤드;big|큰|빅;small|작은|스몰;happy|행복한|해피;sad|슬픈|새드;hot|뜨거운, 더운|핫;cold|차가운, 추운|콜드;go|가다|고;come|오다|컴;sit|앉다|싯;stand|서다|스탠드;run|달리다|런;eat|먹다|잇;jump|점프하다, 뛰어오르다|점프;sing|노래하다|싱;dance|춤추다|댄스;school|학교|스쿨;house|집|하우스;door|문|도어;window|창문|윈도우;good|좋은|굿`,
+'초등 중':`grape|포도|그레이프;strawberry|딸기|스트로베리;watermelon|수박|워터멜런;carrot|당근|캐럿;potato|감자|포테이토;tomato|토마토|토메이토;onion|양파|어니언;rice|쌀, 밥|라이스;juice|주스|주스;candy|사탕|캔디;cake|케이크|케이크;pizza|피자|피자;chicken|닭, 닭고기|치킨;horse|말(동물)|호스;sheep|양|쉽;frog|개구리|프로그;snake|뱀|스네이크;elephant|코끼리|엘러펀트;zebra|얼룩말|지브러;giraffe|기린|저래프;spring|봄|스프링;summer|여름|서머;fall|가을|폴;winter|겨울|윈터;rain|비|레인;snow|눈(날씨)|스노우;wind|바람|윈드;cloud|구름|클라우드;sky|하늘|스카이;river|강|리버;mountain|산|마운틴;sea|바다|씨;park|공원|파크;zoo|동물원|주;store|가게|스토어;hospital|병원|하스피털;library|도서관|라이브러리;kitchen|부엌|키친;room|방|룸;bed|침대|베드;clock|시계(벽시계)|클락;phone|전화기|폰;piano|피아노|피애노;soccer|축구|사커;baseball|야구|베이스볼;Monday|월요일|먼데이;Sunday|일요일|선데이;morning|아침|모닝;night|밤|나잇;today|오늘|투데이;friend|친구|프렌드;teacher|선생님|티처;student|학생|스튜던트;doctor|의사|닥터;brother|남자 형제|브라더;sister|여자 형제|시스터;grandmother|할머니|그랜드마더;grandfather|할아버지|그랜드파더;tall|키가 큰|톨;short|짧은, 키가 작은|쇼트;long|긴|롱;new|새로운|뉴;old|늙은, 오래된|올드;fast|빠른|패스트;slow|느린|슬로우;hungry|배고픈|헝그리;tired|피곤한|타이어드;pretty|예쁜|프리티;kind|친절한|카인드;read|읽다|리드;write|쓰다|라이트;swim|수영하다|스윔;walk|걷다|워크;drink|마시다|드링크;sleep|자다|슬립;play|놀다, (운동을) 하다|플레이;open|열다|오픈;close|닫다|클로즈;like|좋아하다|라이크;love|사랑하다|러브;help|돕다|헬프;see|보다|씨`,
+'초등 상':`weather|날씨|웨더;sunny|화창한|서니;cloudy|흐린|클라우디;rainy|비가 오는|레이니;windy|바람이 부는|윈디;breakfast|아침 식사|브렉퍼스트;lunch|점심 식사|런치;dinner|저녁 식사|디너;vegetable|채소|베지터블;fruit|과일|프루트;restaurant|식당|레스토랑;museum|박물관|뮤지엄;bank|은행|뱅크;station|역|스테이션;airport|공항|에어포트;street|거리|스트리트;bridge|다리(건너는 다리)|브리지;city|도시|시티;country|나라, 시골|컨트리;world|세계|월드;birthday|생일|버스데이;holiday|휴일|할러데이;vacation|방학|베이케이션;present|선물|프레즌트;picture|그림, 사진|픽처;music|음악|뮤직;science|과학|사이언스;math|수학|매스;English|영어|잉글리시;subject|과목|서브젝트;homework|숙제|홈워크;test|시험|테스트;question|질문|퀘스천;answer|대답, 답|앤서;word|단어|워드;story|이야기|스토리;dream|꿈|드림;job|직업|잡;firefighter|소방관|파이어파이터;scientist|과학자|사이언티스트;singer|가수|싱어;farmer|농부|파머;pilot|조종사|파일럿;nurse|간호사|너스;shirt|셔츠|셔츠;pants|바지|팬츠;skirt|치마|스커트;glasses|안경|글래시스;umbrella|우산|엄브렐러;money|돈|머니;price|가격|프라이스;left|왼쪽|레프트;right|오른쪽|라이트;first|첫 번째|퍼스트;second|두 번째|세컨드;third|세 번째|써드;easy|쉬운|이지;difficult|어려운|디피컬트;busy|바쁜|비지;sick|아픈|식;angry|화난|앵그리;excited|신이 난|익사이티드;brave|용감한|브레이브;beautiful|아름다운|뷰티풀;favorite|가장 좋아하는|페이버릿;dirty|더러운|더티;clean|깨끗한, 청소하다|클린;buy|사다|바이;sell|팔다|셀;make|만들다|메이크;learn|배우다|런;teach|가르치다|티치;wait|기다리다|웨이트;visit|방문하다|비짓;catch|잡다|캐치;throw|던지다|쓰로우;wash|씻다|워시;wear|입다|웨어;ride|타다|라이드;climb|오르다|클라임;draw|그리다|드로우;listen|듣다|리슨;speak|말하다|스피크;think|생각하다|씽크;know|알다|노우;want|원하다|원트;need|필요하다|니드;finish|끝내다|피니시;start|시작하다|스타트`,
+'중1 하':`hobby|취미;club|동아리;classmate|반 친구;grade|학년, 성적;uniform|교복, 제복;locker|사물함;hallway|복도;playground|운동장, 놀이터;gym|체육관;classroom|교실;notebook|공책;eraser|지우개;scissors|가위;ruler|자(길이를 재는 도구);history|역사;art|미술, 예술;festival|축제;team|팀;member|회원, 구성원;captain|주장, 선장;neighbor|이웃;village|마을;island|섬;forest|숲;lake|호수;beach|해변;hill|언덕;rock|바위;sand|모래;plant|식물, 심다;insect|곤충;animal|동물;pet|반려동물;health|건강;body|몸;heart|심장, 마음;tooth|이, 치아;voice|목소리;smile|미소, 미소 짓다;laugh|(소리 내어) 웃다;family|가족;parent|부모;cousin|사촌;uncle|삼촌, 외삼촌;aunt|이모, 고모;daughter|딸;son|아들;guest|손님;child|아이, 어린이;careful|조심하는;honest|정직한;quiet|조용한;loud|(소리가) 큰, 시끄러운;strong|강한, 힘센;weak|약한;rich|부유한;poor|가난한;early|이른, 일찍;late|늦은, 늦게;special|특별한;different|다른;same|같은;important|중요한;famous|유명한;delicious|맛있는;safe|안전한;dangerous|위험한;carry|나르다, 운반하다;bring|가져오다;send|보내다;invite|초대하다;join|가입하다, 함께하다;move|움직이다, 이사하다;travel|여행하다;arrive|도착하다;leave|떠나다, 남기다;enjoy|즐기다;practice|연습하다;remember|기억하다;forget|잊다;believe|믿다;choose|고르다, 선택하다;worry|걱정하다;cry|울다;tell|말하다, 알려 주다`,
+'중1 중':`weekend|주말;plan|계획, 계획하다;trip|여행;event|행사, 사건;contest|대회;prize|상, 상품;winner|우승자;score|점수;goal|목표, 골;rule|규칙;chance|기회;problem|문제;reason|이유;example|예, 예시;fact|사실;information|정보;news|소식, 뉴스;message|메시지;letter|편지, 글자;diary|일기;poem|시(문학 작품);novel|소설;magazine|잡지;newspaper|신문;advice|조언, 충고;experience|경험;memory|기억, 추억;future|미래;past|과거;century|세기, 100년;nature|자연;environment|환경;earth|지구;energy|에너지, 기운;air|공기;trash|쓰레기;recycle|재활용하다;save|구하다, 절약하다;protect|보호하다;waste|낭비하다;pollution|오염;temperature|온도;season|계절;area|지역, 면적;build|짓다, 건설하다;change|바꾸다, 변화;grow|자라다, 기르다;become|~이 되다;lose|잃다, 지다;win|이기다;fail|실패하다;pass|통과하다, 건네주다;solve|풀다, 해결하다;explain|설명하다;understand|이해하다;agree|동의하다;share|공유하다, 나누다;prepare|준비하다;collect|모으다, 수집하다;hurt|다치게 하다, 아프다;feel|느끼다;follow|따라가다, 따르다;return|돌아오다, 반납하다;borrow|빌리다;lend|빌려주다;bright|밝은;dark|어두운;heavy|무거운;light|가벼운, 빛;wonderful|훌륭한, 멋진;terrible|끔찍한;useful|유용한;healthy|건강한, 건강에 좋은;ready|준비된;sure|확신하는;nervous|긴장한;proud|자랑스러워하는;surprised|놀란;lonely|외로운;always|항상;usually|보통, 대개;often|자주;sometimes|가끔;never|결코 ~않다;already|이미, 벌써;together|함께`,
+'중1 상':`tradition|전통;custom|관습, 풍습;language|언어;foreign|외국의;global|세계적인;communication|의사소통;volunteer|자원봉사자, 자원봉사하다;community|지역 사회, 공동체;society|사회;government|정부;law|법;citizen|시민;skill|기술, 솜씨;ability|능력;talent|재능;effort|노력;success|성공;mistake|실수;habit|습관;attention|주의, 관심;purpose|목적;result|결과;cause|원인, 일으키다;effect|효과, 영향;situation|상황;condition|상태, 조건;method|방법;process|과정;create|창조하다, 만들어 내다;invent|발명하다;discover|발견하다;develop|개발하다, 발달시키다;improve|향상시키다;increase|증가하다;reduce|줄이다;compare|비교하다;describe|묘사하다;include|포함하다;provide|제공하다;allow|허락하다;avoid|피하다;accept|받아들이다;refuse|거절하다;suggest|제안하다;imagine|상상하다;respect|존경하다, 존중하다;express|표현하다;receive|받다;serious|심각한, 진지한;simple|간단한, 단순한;common|흔한, 공통의;natural|자연의, 자연스러운;modern|현대의;ancient|고대의;comfortable|편안한;convenient|편리한;necessary|필요한;friendly|친절한, 다정한;positive|긍정적인;negative|부정적인;creative|창의적인;curious|호기심이 많은;finally|마침내;suddenly|갑자기;especially|특히;actually|실제로, 사실은;probably|아마;instead|대신에;wise|지혜로운;exactly|정확히;ocean|대양, 바다;universe|우주;planet|행성;alone|혼자;social|사회의, 사회적인`,
+'중2 하':`opinion|의견;survey|설문 조사;research|연구, 조사하다;project|과제, 프로젝트;presentation|발표;discussion|토론, 토의;data|자료, 데이터;character|등장인물, 성격;emotion|감정;behavior|행동;relationship|관계;conflict|갈등, 충돌;solution|해결책;decision|결정;choice|선택;technology|(과학) 기술;machine|기계;device|장치, 기기;screen|화면;resource|자원;disease|질병;medicine|약, 의학;exercise|운동, 운동하다;journey|여정, 여행;destination|목적지;population|인구;region|지역;economy|경제;achieve|이루다, 성취하다;apply|지원하다, 적용하다;attend|참석하다;belong|속하다;consider|고려하다;depend|의존하다;encourage|격려하다;mention|언급하다;notice|알아차리다, 공지;prefer|선호하다;recommend|추천하다;require|필요로 하다, 요구하다;spread|퍼지다, 퍼뜨리다;survive|살아남다;various|다양한;similar|비슷한;ordinary|평범한;unique|독특한, 유일한;huge|거대한;tiny|아주 작은;public|공공의;private|사적인, 개인의;local|지역의, 현지의;international|국제적인;recently|최근에;nearly|거의;wisdom|지혜;knowledge|지식;truth|진실;secret|비밀;danger|위험;fear|두려움;courage|용기;peace|평화;war|전쟁;victory|승리;enemy|적;hero|영웅;weight|무게;height|키, 높이;shape|모양;material|재료, 물질;surface|표면`,
+'중2 중':`benefit|이익, 혜택;influence|영향, 영향을 주다;responsibility|책임;opportunity|기회;quality|품질, 질;quantity|양;production|생산;product|제품;customer|고객;advertisement|광고;company|회사;industry|산업;career|직업, 경력;interview|면접, 인터뷰;expert|전문가;author|작가, 저자;audience|청중, 관객;crowd|군중, 사람들의 무리;generation|세대;ancestor|조상;heritage|유산;symbol|상징;value|가치;attitude|태도;admire|감탄하다, 존경하다;argue|주장하다, 논쟁하다;announce|발표하다, 알리다;appreciate|고마워하다, 감상하다;approach|다가가다, 접근법;communicate|의사소통하다;complain|불평하다;concentrate|집중하다;connect|연결하다;contain|담고 있다, 포함하다;deliver|배달하다, 전달하다;destroy|파괴하다;exist|존재하다;explore|탐험하다;gather|모으다, 모이다;guess|추측하다;hide|숨다, 숨기다;introduce|소개하다;manage|관리하다, 해내다;predict|예측하다;produce|생산하다;publish|출판하다;realize|깨닫다;replace|대체하다, 바꾸다;represent|나타내다, 대표하다;search|찾다, 검색하다;support|지지하다, 지원하다;translate|번역하다;accurate|정확한;anxious|불안한, 걱정하는;aware|알고 있는, 인식하는;confident|자신감 있는;digital|디지털의;efficient|효율적인;essential|필수적인;familiar|익숙한;fair|공정한;independent|독립적인;mental|정신의;physical|신체의, 물리적인;previous|이전의;rare|드문, 희귀한;eventually|결국;gradually|점차;immediately|즉시;rarely|좀처럼 ~하지 않는`,
+'중2 상':`achievement|성취, 업적;analysis|분석;appearance|외모, 출현;atmosphere|분위기, 대기;balance|균형;civilization|문명;competition|경쟁;contribution|기여, 공헌;crisis|위기;democracy|민주주의;diversity|다양성;emergency|비상(사태);evidence|증거;evolution|진화;existence|존재;freedom|자유;identity|정체성;imagination|상상력;independence|독립;individual|개인, 개인의;innovation|혁신;instinct|본능;investment|투자;minority|소수(집단);principle|원리, 원칙;prejudice|편견;priority|우선순위;privacy|사생활;reputation|평판, 명성;revolution|혁명;satisfaction|만족;strategy|전략;tendency|경향;theory|이론;threat|위협;abandon|버리다, 포기하다;acquire|얻다, 습득하다;adapt|적응하다;assume|가정하다, 추정하다;attract|끌어당기다, 마음을 끌다;cooperate|협력하다;criticize|비판하다;define|정의하다;determine|결정하다;distinguish|구별하다;emphasize|강조하다;establish|설립하다;evaluate|평가하다;identify|확인하다, 식별하다;interpret|해석하다;maintain|유지하다;observe|관찰하다;overcome|극복하다;persuade|설득하다;pursue|추구하다;recognize|알아보다, 인정하다;reflect|반사하다, 반영하다;resist|저항하다;abundant|풍부한;artificial|인공의;complex|복잡한;consistent|일관된;crucial|매우 중요한;enormous|막대한;flexible|유연한;inevitable|피할 수 없는;obvious|분명한;potential|잠재적인, 잠재력;sufficient|충분한;temporary|일시적인;urban|도시의;rural|시골의;consequently|그 결과;nevertheless|그럼에도 불구하고;approximately|대략`
+};
+const WORDS={};
+for(const lv of LV9){WORDS[lv]=WRAW[lv].split(';').map(s=>s.trim()).filter(Boolean).map(s=>{const [w,k,p]=s.split('|');return {w,k,p:p||''};}).filter(x=>x.w&&x.k&&/^[A-Za-z ]+$/.test(x.w));}
+const isElem=lv=>lv.startsWith('초등');
+
+function pickWords(lv,exclude,n){
+  const notes=[];let out=WORDS[lv].filter(x=>!exclude.has(x.w));
+  const i=LV9.indexOf(lv);
+  if(out.length<n){const order=[];for(let d=1;d<9;d++){if(i+d<9)order.push(i+d);if(i-d>=0)order.push(i-d);}
+    for(const j of order){if(out.length>=n)break;const more=WORDS[LV9[j]].filter(x=>!exclude.has(x.w)).slice(0,n-out.length).map(x=>({...x,from:LV9[j]}));if(more.length){notes.push(`${lv} 단어를 모두 배부해서 ${LV9[j]} 단어 ${more.length}개를 함께 넣었어요.`);out=out.concat(more);}}}
+  if(out.length<n){const re=WORDS[lv].filter(x=>!out.includes(x)).slice(0,n-out.length);notes.push(`모든 단어를 배부해서 이전에 배부한 단어 ${re.length}개를 다시 넣었어요.`);out=out.concat(re);}
+  return {words:out.slice(0,n),notes};
+}
+
+// 어휘 문항
+const showW=(x,lv)=>`<b class="en">${x.w}</b>`+(isElem(lv)&&x.p?` <span class="pron">[${x.p}]</span>`:'');
+G(ES,'어휘',LV9,lv=>{const ws=WORDS[lv],x=R.pick(ws);return mc(`e-mean-${x.w}`,`다음 단어의 뜻으로 알맞은 것은? ${showW(x,lv)}`,x.k,ws.filter(y=>y!==x).map(y=>y.k),nc(lv));},2);
+G(ES,'어휘',LV9,lv=>{const ws=WORDS[lv],x=R.pick(ws);return mc(`e-word-${x.w}`,`‘${x.k}’을(를) 뜻하는 영어 단어는?`,x.w,ws.filter(y=>y!==x).map(y=>y.w),nc(lv));},2);
+G(ES,'철자',LV9.slice(1),lv=>{const ws=WORDS[lv].filter(x=>!x.w.includes(' ')),x=R.pick(ws);return sa(`e-spell-${x.w}`,`‘${x.k}’을(를) 뜻하는 영어 단어를 쓰세요. (${x.w[0]}(으)로 시작, ${x.w.length}글자)`,x.w);});
+
+// 문법 자료
+const BE_S=[['I','am','p'],['You','are','p'],['He','is','p'],['She','is','p'],['We','are','p'],['They','are','p'],['My mom','is','p'],['Tom','is','p'],['Tom and I','are','p'],['My friends','are','p'],['It','is','a'],['The dog','is','a'],['The cats','are','a']];
+const BE_C={p:['happy','tired','hungry','kind','busy'],a:['hungry','sleepy','cute','small']};
+const ART=[['apple','an'],['egg','an'],['orange','an'],['umbrella','an'],['elephant','an'],['ant','an'],['owl','an'],['onion','an'],['ice cream','an'],['banana','a'],['dog','a'],['cat','a'],['book','a'],['pencil','a'],['desk','a'],['car','a'],['hat','a'],['bird','a'],['ball','a'],['tiger','a'],['eraser','an'],['igloo','an'],['robot','a'],['lemon','a']];
+const PLU=[['box','boxes'],['dish','dishes'],['bus','buses'],['watch','watches'],['baby','babies'],['city','cities'],['story','stories'],['knife','knives'],['leaf','leaves'],['child','children'],['man','men'],['woman','women'],['tooth','teeth'],['foot','feet'],['mouse','mice'],['tomato','tomatoes'],['potato','potatoes'],['book','books'],['cup','cups'],['toy','toys'],['boy','boys'],['day','days'],['sheep','sheep'],['dog','dogs'],['bench','benches'],['glass','glasses'],['lady','ladies'],['key','keys']];
+// b, s(3인칭), past, pp(null=제외), ing, 목적어구
+const VB=[['go','goes','went','gone','going','to school'],['watch','watches','watched','watched','watching','TV'],['study','studies','studied','studied','studying','English'],['play','plays','played','played','playing','soccer'],['have','has','had','had','having','breakfast'],['read','reads','read','read','reading','books'],['eat','eats','ate','eaten','eating','lunch'],['write','writes','wrote','written','writing','a letter'],['swim','swims','swam','swum','swimming','in the pool'],['run','runs','ran','run','running','in the park'],['make','makes','made','made','making','cookies'],['drink','drinks','drank','drunk','drinking','milk'],['wash','washes','washed','washed','washing','the dishes'],['fly','flies','flew','flown','flying','a kite'],['ride','rides','rode','ridden','riding','a bike'],['take','takes','took','taken','taking','a walk'],['buy','buys','bought','bought','buying','bread'],['teach','teaches','taught','taught','teaching','math'],['sing','sings','sang','sung','singing','songs'],['meet','meets','met','met','meeting','friends'],['clean','cleans','cleaned','cleaned','cleaning','the room'],['listen','listens','listened','listened','listening','to music'],['see','sees','saw','seen','seeing','a movie'],['visit','visits','visited','visited','visiting','the museum'],['drive','drives','drove','driven','driving','a car'],['speak','speaks','spoke','spoken','speaking','English'],['cook','cooks','cooked','cooked','cooking','dinner'],['do','does','did','done','doing','the laundry']];
+const V=VB.map(a=>({b:a[0],s:a[1],past:a[2],pp:a[3],ing:a[4],ph:a[5]}));
+const S3=[['He',1],['She',1],['My brother',1],['Tom',1],['Mina',1],['I',0],['You',0],['We',0],['They',0],['My parents',0]];
+const beOf=(s,sg)=>s==='I'?'am':(sg?'is':'are');
+const mcOrSa=lv=>LV9.indexOf(lv)>=5&&Math.random()<0.5;
+const fill=(sent,hint)=>`${sent.replace('___','<span class="gap">(　　　　)</span>')}${hint?` <span class="hint">(${hint})</span>`:''}`;
+const Q_MC='빈칸에 알맞은 것을 고르세요.',Q_SA='( ) 안의 단어를 알맞은 형태로 바꿔 쓰세요.';
+
+G(ES,'be동사',['초등 하','초등 중','중1 하'],lv=>{const [s,be,g]=R.pick(BE_S),c=R.pick(BE_C[g]);return mc(`e-be-${s}-${c}`,`${Q_MC}<br>${fill(`${s} ___ ${c}.`)}`,be,['am','is','are'].filter(x=>x!==be),3);});
+G(ES,'관사(a/an)',['초등 하','초등 중'],lv=>{const [n,a]=R.pick(ART);return mcFixed(`e-art-${n}`,`${Q_MC}<br>${fill(`I have ___ ${n}.`)}`,['a','an'],a==='a'?0:1);});
+G(ES,'복수형',['초등 중','초등 상','중1 하'],lv=>{const [s,p]=R.pick(PLU);
+  if(LV9.indexOf(lv)>=3)return sa(`e-plu-${s}`,`다음 단어의 복수형을 쓰세요. <b class="en">${s}</b> → (　　　)`,p);
+  const wr=[s+'s',s+'es',s.replace(/y$/,'ies'),s.replace(/fe?$/,'ves'),s];return mc(`e-plu-${s}`,`다음 단어의 복수형으로 알맞은 것은? <b class="en">${s}</b>`,p,wr,nc(lv));});
+G(ES,'3인칭 단수',['초등 상','중1 하','중1 중'],lv=>{const v=R.pick(V),[S,sg]=R.pick(S3);const ans=sg?v.s:v.b;const sent=`${S} ___ ${v.ph} every day.`;
+  if(mcOrSa(lv)||LV9.indexOf(lv)===4)return sa(`e-3s-${S}-${v.b}`,`${Q_SA}<br>${fill(sent,v.b)}`,ans);
+  return mc(`e-3s-${S}-${v.b}`,`${Q_MC}<br>${fill(sent)}`,ans,[v.b,v.s,v.ing],3);});
+G(ES,'현재진행형',['초등 상','중1 하','중1 중'],lv=>{const v=R.pick(V.filter(x=>x.b!=='see')),[S,sg]=R.pick(S3);const be=beOf(S,sg);const sent=`${S} ${be} ___ ${v.ph} now.`;
+  if(LV9.indexOf(lv)>=4)return sa(`e-ing-${S}-${v.b}`,`${Q_SA}<br>${fill(sent,v.b)}`,v.ing);
+  const wrong=(v.b+'ing')!==v.ing?v.b+'ing':(v.b+'s');return mc(`e-ing-${S}-${v.b}`,`${Q_MC}<br>${fill(sent)}`,v.ing,[v.b,v.s,wrong,v.past],nc(lv));});
+G(ES,'과거형',['중1 중','중1 상','중2 하'],lv=>{const v=R.pick(V),[S]=R.pick(S3);const sent=`${S} ___ ${v.ph} yesterday.`;
+  if(LV9.indexOf(lv)>=5)return sa(`e-past-${S}-${v.b}`,`${Q_SA}<br>${fill(sent,v.b)}`,v.past);
+  return mc(`e-past-${S}-${v.b}`,`${Q_MC}<br>${fill(sent)}`,v.past,[v.b,v.s,v.ing,v.b+'ed'],4);});
+G(ES,'조동사',['중1 중','중1 상'],lv=>{const v=R.pick(V),[S]=R.pick(S3),md=R.pick(['can','will']);return mc(`e-modal-${S}-${md}-${v.b}`,`${Q_MC}<br>${fill(`${S} ${md} ___ ${v.ph}.`)}`,v.b,[v.s,v.ing,v.past],4);});
+const ADJ=[['tall','taller','tallest','Minsu is ___ than Jiho.','Minsu is the ___ student in my class.'],['big','bigger','biggest','This box is ___ than that one.','This is the ___ box in the store.'],['fast','faster','fastest','A cheetah is ___ than a horse.','The cheetah is the ___ animal on land.'],['hot','hotter','hottest','Today is ___ than yesterday.','Today is the ___ day of this week.'],['happy','happier','happiest','She looks ___ than before.','Today is the ___ day of my life.'],['easy','easier','easiest','This test is ___ than the last one.','This is the ___ question on the test.'],['heavy','heavier','heaviest','My bag is ___ than your bag.','This is the ___ bag in our class.'],['long','longer','longest','This river is ___ than that river.','This is the ___ bridge in our city.'],['young','younger','youngest','My sister is ___ than my brother.','Jun is the ___ member of the team.'],['beautiful','more beautiful','most beautiful','This flower is ___ than that one.','It is the ___ place in the town.'],['popular','more popular','most popular','Soccer is ___ than tennis at my school.','He is the ___ singer in Korea.'],['interesting','more interesting','most interesting','This book is ___ than that one.','Science is the ___ subject for me.'],['expensive','more expensive','most expensive','This phone is ___ than that one.','This is the ___ car in the shop.'],['good','better','best','Your idea is ___ than mine.','She is the ___ player on our team.'],['bad','worse','worst','The weather is ___ today than yesterday.','That was the ___ day of my vacation.']].map(a=>({a:a[0],c:a[1],s:a[2],cs:a[3],ss:a[4]}));
+G(ES,'비교급·최상급',['중1 상','중2 하','중2 중'],lv=>{const j=R.pick(ADJ),sup=Math.random()<0.5&&lv!=='중1 상';const sent=sup?j.ss:j.cs,ans=sup?j.s:j.c;
+  if(LV9.indexOf(lv)>=6&&Math.random()<0.5)return sa(`e-cmp-${sup?'s':'c'}-${j.a}`,`${Q_SA}<br>${fill(sent,j.a)}`,ans);
+  const wrC=j.c.startsWith('more')?j.a+'er':'more '+j.a,wrS=j.s.startsWith('most')?j.a+'est':'most '+j.a;
+  return mc(`e-cmp-${sup?'s':'c'}-${j.a}`,`${Q_MC}<br>${fill(sent)}`,ans,sup?[j.c,j.a,wrS]:[j.a,j.s,wrC],4);});
+const ACT=[['swim','swimming'],['read books','reading books'],['play the piano','playing the piano'],['study English','studying English'],['ride a bike','riding a bike'],['cook pasta','cooking pasta'],['dance','dancing'],['watch movies','watching movies'],['write stories','writing stories'],['run in the park','running in the park']];
+const TOV=[['I want ___.','to'],['We hope ___.','to'],['They plan ___ this weekend.','to'],['I decided ___.','to'],['I need ___.','to'],['I enjoy ___.','ing'],['We finished ___ an hour ago.','ing'],['They kept ___.','ing'],['I practice ___ every day.','ing'],['He gave up ___.','ing']];
+G(ES,'to부정사·동명사',['중2 하','중2 중','중2 상'],lv=>{const [f,t]=R.pick(TOV),[b,ing]=R.pick(ACT);const ans=t==='to'?'to '+b:ing;return mc(`e-toing-${f}-${b}`,`${Q_MC}<br>${fill(f)}`,ans,['to '+b,ing,b],3);});
+const PAS=[['This letter','was','write','wrote','written','my grandmother'],['The window','was','break','broke','broken','Tom'],['This picture','was','paint','painted','painted','a famous artist'],['The cake','was','make','made','made','my dad'],['This house','was','build','built','built','my grandfather'],['The car','was','wash','washed','washed','my brother'],['The phone','was','find','found','found','a police officer'],['The dishes','were','wash','washed','washed','my sister'],['The cookies','were','bake','baked','baked','my mom'],['The door','was','open','opened','opened','the teacher'],['Hangeul','was','create','created','created','King Sejong'],['The song','was','sing','sang','sung','many people'],['The trees','were','plant','planted','planted','the students'],['The thief','was','catch','caught','caught','the police']];
+G(ES,'수동태',['중2 중','중2 상'],lv=>{const [o,be,b,past,pp,by]=R.pick(PAS);const sent=`${o} ${be} ___ by ${by}.`;
+  if(Math.random()<0.5)return sa(`e-pas-${o}`,`${Q_SA}<br>${fill(sent,b)}`,pp);
+  const ing=(/[^e]e$/.test(b)?b.slice(0,-1):b)+'ing';return mc(`e-pas-${o}`,`${Q_MC}<br>${fill(sent)}`,pp,[b,past,ing],4);});
+const EXP={eat:'Indian food',see:'a whale',ride:'a horse',visit:'Jeju Island',meet:'a famous singer',write:'a poem',drive:'a truck',swim:'in the sea',fly:'a drone',cook:'pasta',sing:'this song',drink:'coconut juice',make:'kimchi',read:'this book',take:'a cooking class'};
+const S_PF=[['I','have'],['We','have'],['They','have'],['You','have'],['He','has'],['She','has'],['My sister','has'],['Tom','has']];
+G(ES,'현재완료',['중2 상'],lv=>{const v=R.pick(V.filter(x=>EXP[x.b])),[S,h]=R.pick(S_PF);
+  if(Math.random()<0.4)return mc(`e-pfh-${S}-${v.b}`,`${Q_MC}<br>${fill(`${S} ___ ${v.pp} ${EXP[v.b]} before.`)}`,h,['have','has','is'],3);
+  const sent=`${S} ${h} ___ ${EXP[v.b]} before.`;if(Math.random()<0.5)return sa(`e-pf-${S}-${v.b}`,`${Q_SA}<br>${fill(sent,v.b)}`,v.pp);
+  return mc(`e-pf-${S}-${v.b}`,`${Q_MC}<br>${fill(sent)}`,v.pp,[v.b,v.ing,v.past,v.s],4);});
+const REL_P=['a friend','a teacher','a cousin','an uncle','a neighbor'],REL_PC=['lives in Busan','plays the guitar well','can speak Chinese','works at a hospital'];
+const REL_T=['a bag','a phone','a bike','a book','a watch'],REL_TC=['is very old','was a gift from my dad','I bought last week'];
+G(ES,'관계대명사',['중2 상'],lv=>{const per=Math.random()<0.5;const n=per?R.pick(REL_P):R.pick(REL_T),c=per?R.pick(REL_PC):R.pick(REL_TC);return mcFixed(`e-rel-${n}-${c}`,`빈칸에 알맞은 관계대명사를 고르세요.<br>${fill(`I have ${n} ___ ${c}.`)}`,['who','which','whose','what'],per?0:1);});
+
+/* ===================== 국어 ===================== */
+const KS='국어';
+const K_SPELL=[['며칠','몇일','기초'],['설거지','설겆이','기초'],['금세','금새','기초'],['오랜만','오랫만','기초'],['깨끗이','깨끗히','기초'],['떡볶이','떡볶기','기초'],['찌개','찌게','기초'],['베개','배개','기초'],['어떡해','어떻해','기초'],['할게','할께','기초'],['웬일','왠일','기초'],['역할','역활','기초'],
+['희한하다','희안하다','하'],['일일이','일일히','하'],['굳이','구지','하'],['설레다','설레이다','하'],['곰곰이','곰곰히','하'],['꼼꼼히','꼼꼼이','하'],['솔직히','솔직이','하'],['왠지','웬지','하'],['어이없다','어의없다','하'],
+['개수','갯수','중'],['대가','댓가','중'],['육개장','육계장','중'],['통째로','통채로','중'],['무릅쓰다','무릎쓰다','중'],['오뚝이','오뚜기','중'],['짜깁기','짜집기','중'],['움큼','웅큼','중'],
+['얼마큼','얼만큼','상'],['내로라하다','내노라하다','상'],['핼쑥하다','핼쓱하다','상'],['애당초','애시당초','상'],['구레나룻','구렛나루','상'],['도긴개긴','도찐개찐','상'],['어쭙잖다','어줍잖다','상']].map(a=>({c:a[0],w:a[1],lv:a[2]}));
+G(KS,'맞춤법',LV4,lv=>{const x=pickLv(K_SPELL,lv);const o=upTo(K_SPELL,lv,1).filter(y=>y!==x);return mc(`k-spo-${x.c}`,'다음 중 맞춤법이 바른 것은?',x.c,o.map(y=>y.w),nc(lv),`바른 표기: ${x.c}`);});
+G(KS,'맞춤법',LV4,lv=>{const x=pickLv(K_SPELL,lv);const o=upTo(K_SPELL,lv,1).filter(y=>y!==x);return mc(`k-spx-${x.w}`,'다음 중 맞춤법이 <u>틀린</u> 것은?',x.w,o.map(y=>y.c),nc(lv),`${x.w} → ${x.c}`);});
+G(KS,'맞춤법',LV4,lv=>{const x=pickLv(K_SPELL,lv);return sa(`k-sps-${x.c}`,`밑줄 친 말을 바르게 고쳐 쓰세요. <u>${x.w}</u>`,x.c);});
+const K_ANT=[['크다','작다','기초'],['높다','낮다','기초'],['길다','짧다','기초'],['넓다','좁다','기초'],['무겁다','가볍다','기초'],['밝다','어둡다','기초'],['덥다','춥다','기초'],['빠르다','느리다','기초'],['쉽다','어렵다','기초'],['많다','적다','기초'],['깊다','얕다','기초'],['두껍다','얇다','기초'],['기쁘다','슬프다','기초'],['열다','닫다','기초'],['앞','뒤','기초'],['위','아래','기초'],
+['시작','끝','하'],['입구','출구','하'],['승리','패배','하'],['찬성','반대','하'],['성공','실패','하'],['오르다','내리다','하'],['출발','도착','하'],['장점','단점','하'],['증가','감소','하'],['긍정','부정','하'],['공격','수비','하']].map(a=>({a:a[0],b:a[1],lv:a[2]}));
+G(KS,'어휘',LV4,lv=>{const x=pickLv(K_ANT,lv);return mc(`k-ant-${x.a}`,`‘${x.a}’의 반대말로 알맞은 것은?`,x.b,K_ANT.filter(y=>y!==x&&y.b!==x.a).map(y=>y.b),nc(lv));});
+const K_HON=[['밥','진지','기초'],['나이','연세','기초'],['집','댁','기초'],['이름','성함','기초'],['말','말씀','기초'],['생일','생신','기초'],['자다','주무시다','기초'],['있다','계시다','하'],['아프다','편찮으시다','하'],['주다','드리다','하'],['묻다','여쭈다','하'],['먹다','드시다','하']].map(a=>({a:a[0],b:a[1],lv:a[2]}));
+G(KS,'어휘',['기초','하','중'],lv=>{const x=pickLv(K_HON,lv)||R.pick(K_HON);return mc(`k-hon-${x.a}`,`‘${x.a}’의 높임말로 알맞은 것은?`,x.b,K_HON.filter(y=>y!==x).map(y=>y.b),nc(lv));});
+const K_PROV=[['가는 말이 고와야 오는 말이 곱다','내가 남에게 좋게 말해야 남도 나에게 좋게 말한다','기초',''],['티끌 모아 태산','아주 작은 것도 모이면 큰 것이 된다','기초','태산'],['누워서 떡 먹기','아주 하기 쉬운 일','기초','떡'],['소 잃고 외양간 고친다','일이 잘못된 뒤에 손을 써도 소용없다','기초','외양간'],['등잔 밑이 어둡다','가까이 있는 것을 오히려 잘 모른다','기초','밑'],['우물 안 개구리','넓은 세상을 모르고 좁은 생각에 갇힌 사람','기초','개구리'],['세 살 버릇 여든까지 간다','어릴 때 든 버릇은 늙어서도 고치기 어렵다','기초','여든'],
+['원숭이도 나무에서 떨어진다','아무리 잘하는 사람도 실수할 때가 있다','하',''],['백지장도 맞들면 낫다','쉬운 일이라도 함께 하면 더 쉽다','하','맞들면'],['돌다리도 두들겨 보고 건너라','잘 아는 일이라도 조심해서 해야 한다','하','두들겨'],['개구리 올챙이 적 생각 못 한다','형편이 나아진 뒤 어려웠던 때를 잊고 잘난 체한다','하',''],['콩 심은 데 콩 나고 팥 심은 데 팥 난다','원인에 따라 그에 맞는 결과가 생긴다','하',''],['빈 수레가 요란하다','실속 없는 사람이 오히려 더 떠든다','하','수레'],
+['사공이 많으면 배가 산으로 간다','여러 사람이 저마다 주장하면 일이 엉뚱하게 된다','중',''],['하늘이 무너져도 솟아날 구멍이 있다','아무리 어려운 상황에도 헤쳐 나갈 방법이 있다','중',''],['고래 싸움에 새우 등 터진다','강한 자들의 싸움에 약한 자가 피해를 입는다','중','새우'],['윗물이 맑아야 아랫물이 맑다','윗사람이 바르게 행동해야 아랫사람도 바르게 행동한다','중',''],['서당 개 삼 년이면 풍월을 읊는다','오래 보고 들으면 저절로 알게 된다','중',''],['열 번 찍어 안 넘어가는 나무 없다','꾸준히 노력하면 결국 이룰 수 있다','중',''],['낮말은 새가 듣고 밤말은 쥐가 듣는다','아무도 듣지 않는 곳에서도 말을 조심해야 한다','중','']].map(a=>({p:a[0],m:a[1],lv:a[2],bl:a[3]}));
+G(KS,'속담·사자성어',LV4,lv=>{const x=pickLv(K_PROV,lv);return mc(`k-pv1-${x.p}`,`다음 속담의 뜻으로 알맞은 것은?${box(x.p)}`,x.m,K_PROV.filter(y=>y!==x).map(y=>y.m),nc(lv));});
+G(KS,'속담·사자성어',LV4,lv=>{const x=pickLv(K_PROV,lv);return mc(`k-pv2-${x.p}`,`다음 뜻을 가진 속담은?${box(x.m)}`,x.p,K_PROV.filter(y=>y!==x).map(y=>y.p),nc(lv));});
+G(KS,'속담·사자성어',LV4,lv=>{const x=pickLv(K_PROV,lv,y=>y.bl);if(!x)return null;return sa(`k-pv3-${x.p}`,`빈칸에 알맞은 말을 넣어 속담을 완성하세요.${box(x.p.replace(x.bl,'(　　　)'))}`,x.bl);});
+const K_IDI=[['일석이조','한 가지 일로 두 가지 이익을 얻음','하'],['동문서답','묻는 말에 엉뚱한 대답을 함','하'],['작심삼일','단단히 먹은 마음이 오래가지 못함','하'],['다다익선','많으면 많을수록 더 좋음','하'],['우왕좌왕','이리저리 왔다 갔다 하며 갈피를 잡지 못함','하'],['이심전심','말하지 않아도 마음과 마음이 서로 통함','하'],['각양각색','여러 가지 모양과 빛깔','하'],['금시초문','이제 처음으로 들음','하'],
+['유비무환','미리 준비해 두면 걱정이 없음','중'],['대기만성','큰 인물은 늦게 이루어짐','중'],['고진감래','고생 끝에 즐거움이 옴','중'],['막상막하','실력이 비슷하여 낫고 못함을 가리기 어려움','중'],['역지사지','상대방의 처지에서 생각해 봄','중'],['십시일반','여러 사람이 조금씩 힘을 합하면 한 사람을 돕기 쉬움','중'],['자업자득','자기가 저지른 일의 결과를 자기가 받음','중'],['박학다식','배운 것이 넓고 아는 것이 많음','중'],
+['과유불급','정도가 지나친 것은 모자란 것과 같음','상'],['어부지리','둘이 다투는 사이에 엉뚱한 사람이 이익을 얻음','상'],['청출어람','제자가 스승보다 나음','상'],['사필귀정','모든 일은 결국 바른 길로 돌아감','상']].map(a=>({w:a[0],m:a[1],lv:a[2]}));
+G(KS,'속담·사자성어',['하','중','상'],lv=>{const x=pickLv(K_IDI,lv);return mc(`k-id1-${x.w}`,`다음 사자성어의 뜻으로 알맞은 것은? <b>${x.w}</b>`,x.m,K_IDI.filter(y=>y!==x).map(y=>y.m),nc(lv));});
+G(KS,'속담·사자성어',['하','중','상'],lv=>{const x=pickLv(K_IDI,lv);return mc(`k-id2-${x.w}`,`다음 뜻을 가진 사자성어는?${box(x.m)}`,x.w,K_IDI.filter(y=>y!==x).map(y=>y.w),nc(lv));});
+const POS=['명사','대명사','수사','동사','형용사','관형사','부사','감탄사','조사'];
+const K_POS=[['나는 [사과]를 먹었다.','명사','하'],['[우리]는 운동장에서 놀았다.','대명사','하'],['[셋]이 함께 집에 갔다.','수사','하'],['동생이 빨리 [달린다].','동사','하'],['하늘이 정말 [파랗다].','형용사','하'],['꽃이 [매우] 예쁘다.','부사','하'],['[와], 정말 멋지다!','감탄사','하'],['나는 학교[에] 간다.','조사','하'],['[바다]가 넓다.','명사','하'],['아기가 [잔다].','동사','하'],['날씨가 [춥다].','형용사','하'],['[어머나], 깜짝이야!','감탄사','하'],
+['[헌] 옷을 정리했다.','관형사','중'],['[모든] 학생이 모였다.','관형사','중'],['[여기]가 우리 집이다.','대명사','중'],['[하나]에 둘을 더하면 셋이다.','수사','중'],['학생들이 [열심히] 공부한다.','부사','중'],['동생[이] 웃었다.','조사','중'],['물이 [맑다].','형용사','중'],['[그것]은 내 연필이다.','대명사','중'],['[새] 신발을 샀다.','관형사','중'],
+['사과 [세] 개를 샀다.','관형사','상'],['[저] 산이 정말 높다.','관형사','상'],['[저]는 중학생입니다.','대명사','상'],['[이] 책은 재미있다.','관형사','상'],['[다섯]에서 둘을 빼면 셋이다.','수사','상'],['[아니], 그게 아니야.','감탄사','상'],['나[도] 같이 갈래.','조사','상'],['[잘] 먹겠습니다.','부사','상']].map(a=>({s:a[0],p:a[1],lv:a[2]}));
+G(KS,'문법',['하','중','상'],lv=>{const x=pickLv(K_POS,lv);const w=x.s.match(/\[(.+?)\]/)[1];return mc(`k-pos-${x.s}`,`밑줄 친 단어의 품사로 알맞은 것은?${box(x.s.replace(/\[(.+?)\]/,'<u>$1</u>'))}`,x.p,POS,nc(lv));});
+const K_WF=[['하늘','단일어'],['바다','단일어'],['나무','단일어'],['사람','단일어'],['구름','단일어'],['별','단일어'],['손발','합성어'],['밤낮','합성어'],['책가방','합성어'],['돌다리','합성어'],['눈물','합성어'],['김밥','합성어'],['앞뒤','합성어'],['첫눈','합성어'],['산나물','합성어'],['꽃병','합성어'],['맨손','파생어'],['풋사과','파생어'],['덮개','파생어'],['지우개','파생어'],['헛수고','파생어'],['먹이','파생어'],['넓이','파생어'],['웃음','파생어'],['잠꾸러기','파생어'],['욕심쟁이','파생어'],['군말','파생어'],['햇과일','파생어']].map(a=>({w:a[0],t:a[1]}));
+G(KS,'문법',['중','상'],lv=>{const t=R.pick(['단일어','합성어','파생어']);const x=R.pick(K_WF.filter(y=>y.t===t));return mc(`k-wf1-${x.w}`,`다음 중 <b>${t}</b>인 것은?`,x.w,K_WF.filter(y=>y.t!==t).map(y=>y.w),nc(lv));});
+G(KS,'문법',['중','상'],lv=>{const x=R.pick(K_WF);return mcFixed(`k-wf2-${x.w}`,`‘${x.w}’은(는) 단어의 짜임으로 볼 때 무엇인가요?`,['단일어','합성어','파생어'],['단일어','합성어','파생어'].indexOf(x.t));});
+const K_FIG=[['그녀의 얼굴은 보름달처럼 환했다.','직유법','하'],['아기 손이 단풍잎 같다.','직유법','하'],['구름이 솜사탕같이 부드러워 보인다.','직유법','하'],['내 마음은 잔잔한 호수다.','은유법','하'],['시간은 금이다.','은유법','하'],['선생님은 우리 반의 등대이다.','은유법','하'],['바람이 창문을 똑똑 두드린다.','의인법','하'],['꽃들이 방긋 웃으며 인사한다.','의인법','하'],['시냇물이 노래하며 흘러간다.','의인법','하'],
+['배가 고파서 소 한 마리도 먹을 수 있겠다.','과장법','중'],['기다리다가 목이 빠지겠다.','과장법','중'],['가자, 가자, 바다로 가자.','반복법','중'],['푸른 하늘, 푸른 바다, 푸른 우리 마을','반복법','중'],['산은 높고 물은 깊다.','대구법','중'],['낮에는 해가 뜨고 밤에는 달이 뜬다.','대구법','중'],['이 아름다운 강산을 어찌 잊을 수 있으랴?','설의법','중'],['누가 이 기쁨을 모르겠는가?','설의법','중'],
+['(약속에 한 시간 늦게 온 친구에게) 일찍도 왔구나.','반어법','상'],['(방을 잔뜩 어지럽힌 동생에게) 방을 참 깨끗하게도 해 놓았구나.','반어법','상'],['붐비는 군중 속에서 나는 시끄러운 침묵을 느꼈다.','역설법','상'],['때로는 지는 것이 이기는 것이다.','역설법','상']].map(a=>({s:a[0],t:a[1],lv:a[2]}));
+const FIG_T=['직유법','은유법','의인법','과장법','반복법','대구법','설의법','반어법','역설법'],FIG_LV={'하':3,'중':7,'상':9};
+G(KS,'문학',['하','중','상'],lv=>{const x=pickLv(K_FIG,lv);const pool=FIG_T.slice(0,FIG_LV[lv]);return mc(`k-fig-${x.s}`,`다음 문장에 주로 쓰인 표현 방법은?${box(x.s)}`,x.t,pool,nc(lv));});
+const K_TERM=[['직유법','‘~같이’, ‘~처럼’ 등을 써서 직접 빗대어 표현하는 방법','중','문학'],['은유법','‘A는 B이다’처럼 연결하는 말 없이 빗대어 표현하는 방법','중','문학'],['의인법','사람이 아닌 것을 사람처럼 표현하는 방법','중','문학'],['과장법','실제보다 훨씬 크게 또는 작게 부풀려 표현하는 방법','중','문학'],['반어법','겉으로 하는 말과 속뜻을 반대로 표현하는 방법','상','문학'],['역설법','겉으로는 앞뒤가 맞지 않지만 그 속에 진실을 담은 표현 방법','상','문학'],['설의법','누구나 아는 내용을 일부러 물어서 강조하는 방법','상','문학'],
+['운율','시에서 느껴지는 말의 가락','중','문학'],['시적 화자','시 속에서 말하는 사람','중','문학'],['심상','시를 읽을 때 마음속에 떠오르는 감각적인 모습이나 느낌','상','문학'],['갈등','인물이 겪는 마음속 고민이나 다른 대상과의 대립','중','문학'],['시점','이야기를 서술하는 관점이나 위치','상','문학'],['복선','앞으로 일어날 일을 미리 넌지시 알려 주는 장치','상','문학'],['배경','사건이 일어나는 시간과 장소, 사회적 환경','중','문학'],
+['주제','글쓴이가 글을 통해 전하고자 하는 중심 생각','중','설명 방법'],['논설문','자신의 주장을 논리적으로 펼쳐 읽는 이를 설득하는 글','중','설명 방법'],['설명문','어떤 대상에 대한 지식이나 정보를 알기 쉽게 전달하는 글','중','설명 방법'],['수필','글쓴이가 생활 속 경험과 생각을 자유롭게 쓴 글','중','설명 방법'],['근거','주장을 뒷받침하는 이유나 자료','상','설명 방법'],['요약','글의 중요한 내용을 간추려 짧게 정리하는 것','상','설명 방법']].map(a=>({t:a[0],d:a[1],lv:a[2],tp:a[3]}));
+G(KS,'문학',['중','상'],lv=>{const x=pickLv(K_TERM,lv,y=>y.tp==='문학');return mc(`k-term-${x.t}`,`다음 설명에 해당하는 것은?${box(x.d)}`,x.t,K_TERM.filter(y=>y!==x&&y.tp==='문학').map(y=>y.t),nc(lv));});
+G(KS,'설명 방법',['중','상'],lv=>{const x=pickLv(K_TERM,lv,y=>y.tp==='설명 방법');return mc(`k-term-${x.t}`,`다음 설명에 해당하는 것은?${box(x.d)}`,x.t,K_TERM.filter(y=>y!==x&&y.tp==='설명 방법').map(y=>y.t),nc(lv));});
+const K_EXP=[['포유류는 새끼를 낳아 젖을 먹여 기르는 동물이다.','정의'],['광합성은 식물이 빛을 이용해 양분을 만드는 과정이다.','정의'],['우리 고장의 특산물로는 사과, 배, 인삼 등이 있다.','예시'],['재활용할 수 있는 물건에는 종이, 캔, 유리병 등이 있다.','예시'],['고래와 상어는 둘 다 바다에서 산다.','비교'],['연필과 볼펜은 모두 글씨를 쓰는 도구이다.','비교'],['개는 무리 지어 생활하는 반면, 고양이는 혼자 지내는 것을 좋아한다.','대조'],['여름은 덥고 습하지만, 겨울은 춥고 건조하다.','대조'],['악기는 연주 방법에 따라 현악기, 관악기, 타악기로 나눌 수 있다.','분류'],['동물은 등뼈가 있는지에 따라 척추동물과 무척추동물로 나뉜다.','분류'],['꽃은 꽃잎, 꽃받침, 암술, 수술로 이루어져 있다.','분석'],['자전거는 바퀴, 페달, 핸들, 안장 등으로 구성되어 있다.','분석'],['밤새 비가 많이 내려서 강물이 크게 불어났다.','인과'],['운동을 꾸준히 하자 체력이 좋아졌다.','인과']].map(a=>({s:a[0],t:a[1]}));
+G(KS,'설명 방법',['중','상'],lv=>{const x=R.pick(K_EXP);return mc(`k-exp-${x.s}`,`다음 문장에 쓰인 설명 방법은?${box(x.s)}`,x.t,['정의','예시','비교','대조','분류','분석','인과'],nc(lv));},2);
+const K_READ=[
+['우리 동네에는 작은 도서관이 있다. 도서관은 아침 9시에 문을 열고 저녁 6시에 문을 닫는다. 월요일은 쉬는 날이다.','도서관이 쉬는 날은 무슨 요일인가요?','월요일',['화요일','토요일','일요일','금요일'],'기초'],
+['민지는 아침마다 강아지와 산책을 한다. 강아지의 이름은 콩이다. 콩이는 공놀이를 가장 좋아한다.','콩이가 가장 좋아하는 것은 무엇인가요?','공놀이',['낮잠','목욕','간식 먹기'],'기초'],
+['지호는 어제 감기에 걸려 학교에 가지 못했다. 오늘 아침, 짝꿍 서아가 어제 배운 내용을 정리한 공책을 빌려주었다. 지호는 서아에게 고맙다고 말했다.','지호가 서아에게 고마워한 까닭은 무엇인가요?','어제 배운 내용을 정리한 공책을 빌려주어서',['감기약을 사다 주어서','함께 병원에 가 주어서','숙제를 대신 해 주어서'],'기초'],
+['할머니께서는 시골에서 고추와 배추를 기르신다. 지난 주말에 나는 할머니 댁에 가서 배추 뽑는 일을 도와 드렸다. 할머니께서 무척 기뻐하셨다.','‘나’가 지난 주말에 할머니를 도와 드린 일은 무엇인가요?','배추 뽑기',['고추 따기','설거지하기','청소하기'],'기초'],
+['우리 반은 이번 주 금요일에 학급 회의를 연다. 회의 주제는 ‘교실을 깨끗하게 사용하는 방법’이다. 모두 좋은 의견을 한 가지씩 생각해 오기로 했다.','학급 회의의 주제는 무엇인가요?','교실을 깨끗하게 사용하는 방법',['급식을 남기지 않는 방법','체육 대회를 준비하는 방법','친구와 사이좋게 지내는 방법'],'기초'],
+['우리 반은 이번 주 금요일에 학급 회의를 연다. 회의 주제는 ‘교실을 깨끗하게 사용하는 방법’이다. 모두 좋은 의견을 한 가지씩 생각해 오기로 했다.','학급 회의를 여는 날은 언제인가요?','이번 주 금요일',['이번 주 월요일','이번 주 수요일','다음 주 금요일'],'기초'],
+['꿀벌은 꽃에서 꿀과 꽃가루를 모은다. 이때 꽃가루가 다른 꽃으로 옮겨져 꽃이 열매를 맺을 수 있게 된다. 그래서 꿀벌은 식물에게 고마운 곤충이다.','꿀벌이 식물에게 고마운 곤충인 까닭은 무엇인가요?','꽃가루를 옮겨 꽃이 열매를 맺게 도와서',['꿀을 많이 만들어서','해로운 벌레를 잡아먹어서','꽃에 물을 주어서'],'하'],
+['물을 아껴 쓰려면 양치할 때 컵을 사용하는 것이 좋다. 또 샤워 시간을 줄이고, 설거지할 때 물을 받아서 쓰면 물을 많이 아낄 수 있다.','이 글의 중심 내용으로 알맞은 것은?','물을 아껴 쓰는 방법',['양치를 바르게 하는 방법','설거지를 하는 순서','샤워를 하면 좋은 점'],'하'],
+['가을이 되면 나뭇잎의 색이 변한다. 날씨가 추워지면 잎에 있던 초록색 색소가 줄어들면서 숨어 있던 노란색이 드러나거나 빨간색 색소가 새로 만들어지기 때문이다.','가을에 나뭇잎의 색이 변하는 까닭은 무엇인가요?','초록색 색소가 줄어들고 다른 색이 드러나거나 만들어져서',['나뭇잎이 물을 많이 마셔서','햇빛이 더 강해져서','비가 많이 내려서'],'하'],
+['학교에서 휴대 전화 사용을 줄여야 한다. 수업 시간에 휴대 전화를 보면 수업에 집중하기 어렵다. 또 쉬는 시간에 친구와 이야기를 나눌 시간이 줄어든다.','글쓴이의 주장으로 알맞은 것은?','학교에서 휴대 전화 사용을 줄여야 한다.',['휴대 전화로 공부를 해야 한다.','쉬는 시간을 늘려야 한다.','친구와 더 많이 놀아야 한다.'],'하'],
+['재활용품을 버릴 때는 종류별로 나누어야 한다. 페트병은 내용물을 비우고 라벨을 떼어 버린다. 종이 상자는 테이프를 떼고 납작하게 접어서 버린다.','페트병을 버리는 방법으로 알맞은 것은?','내용물을 비우고 라벨을 떼어 버린다.',['뚜껑을 닫고 그대로 버린다.','종이 상자와 함께 묶어 버린다.','테이프를 붙여서 버린다.'],'하']].map((a,i)=>({id:i,t:a[0],q:a[1],c:a[2],d:a[3],lv:a[4]}));
+G(KS,'독해',['기초','하'],lv=>{const x=pickLv(K_READ,lv);return mc(`k-rd-${x.id}`,`다음 글을 읽고 물음에 답하세요.${box(x.t)}${x.q}`,x.c,x.d,nc(lv));},2);
+
+/* ===================== 과학 ===================== */
+const SS='과학';
+const S_TERM=[
+['증발','액체의 표면에서 액체가 기체로 변하는 현상','기초','물질'],['응결','공기 중의 수증기가 차가운 물체 표면에서 물방울로 맺히는 현상','기초','물질'],['용해','설탕이 물에 녹는 것처럼 한 물질이 다른 물질에 녹아 고르게 섞이는 현상','기초','물질'],['용액','녹는 물질이 녹이는 물질에 골고루 섞여 있는 물질','기초','물질'],
+['광합성','식물이 빛을 받아 스스로 양분을 만드는 일','기초','생명'],['먹이 사슬','생물들의 먹고 먹히는 관계를 사슬처럼 나타낸 것','기초','생명'],['뿌리','땅속에서 물을 흡수하고 식물을 지지하는 기관','기초','생명'],
+['화석','아주 오래전에 살았던 생물의 몸체나 흔적이 암석에 남아 있는 것','기초','지구와 우주'],['지층','자갈, 모래, 진흙 등이 쌓여 층을 이루고 있는 것','기초','지구와 우주'],['자전','지구가 자전축을 중심으로 하루에 한 바퀴씩 도는 것','기초','지구와 우주'],['공전','지구가 태양을 중심으로 일 년에 한 바퀴씩 도는 것','기초','지구와 우주'],
+['그림자','빛이 물체를 통과하지 못해 물체 뒤쪽에 생기는 어두운 부분','기초','에너지'],
+['중력','지구가 물체를 지구 중심 방향으로 끌어당기는 힘','하','힘과 운동'],['마찰력','두 물체가 접촉한 면에서 물체의 운동을 방해하는 힘','하','힘과 운동'],['탄성력','모양이 변한 물체가 원래 모양으로 되돌아가려는 힘','하','힘과 운동'],['부력','액체나 기체가 그 속에 있는 물체를 위쪽으로 밀어 올리는 힘','하','힘과 운동'],['질량','물체가 가진 고유한 양으로, 장소가 바뀌어도 변하지 않는 양','하','힘과 운동'],['무게','물체에 작용하는 중력의 크기','하','힘과 운동'],
+['세포','생물체를 구성하는 기본 단위','하','생명'],['엽록체','식물 세포에서 광합성이 일어나는 초록색 구조','하','생명'],['핵','세포의 생명 활동을 조절하며 유전 물질이 들어 있는 곳','하','생명'],['기공','잎의 표면에 있는 작은 구멍으로 기체가 드나드는 곳','하','생명'],['증산 작용','식물체 속의 물이 잎의 기공을 통해 수증기로 빠져나가는 현상','하','생명'],['생물 다양성','일정한 지역에 사는 생물의 다양한 정도','하','생명'],
+['융해','고체가 액체로 변하는 현상','하','물질'],['응고','액체가 고체로 변하는 현상','하','물질'],['기화','액체가 기체로 변하는 현상','하','물질'],['액화','기체가 액체로 변하는 현상','하','물질'],['승화','고체가 기체로, 또는 기체가 고체로 바로 변하는 현상','하','물질'],['확산','물질을 이루는 입자가 스스로 운동하여 퍼져 나가는 현상','하','물질'],
+['화성암','마그마나 용암이 식어서 굳어진 암석','하','지구와 우주'],['퇴적암','퇴적물이 쌓이고 다져져 굳어진 암석','하','지구와 우주'],['변성암','암석이 높은 열과 압력을 받아 성질이 변한 암석','하','지구와 우주'],['풍화','암석이 오랜 시간에 걸쳐 잘게 부서지거나 성질이 변하는 현상','하','지구와 우주'],
+['반사','빛이 물체의 표면에 부딪혀 되돌아 나오는 현상','하','에너지'],
+['원소','더 이상 다른 물질로 분해되지 않는, 물질을 이루는 기본 성분','중','물질'],['원자','물질을 이루는 기본 입자','중','물질'],['분자','물질의 성질을 나타내는 가장 작은 입자','중','물질'],['밀도','물질의 질량을 부피로 나눈 값','중','물질'],['끓는점','액체가 끓어 기체로 변하는 동안 일정하게 유지되는 온도','중','물질'],['녹는점','고체가 녹아 액체로 변하는 동안 일정하게 유지되는 온도','중','물질'],['순물질','한 가지 물질로만 이루어진 물질','중','물질'],['혼합물','두 가지 이상의 순물질이 섞여 있는 물질','중','물질'],
+['세포벽','식물 세포의 가장 바깥에서 세포를 보호하고 모양을 유지하는 구조','중','생명'],['적혈구','혈액 속에서 산소를 운반하는 혈구','중','생명'],['백혈구','몸속에 들어온 세균 등을 잡아먹어 몸을 지키는 혈구','중','생명'],['소화','음식물 속의 영양소를 흡수할 수 있을 만큼 작게 분해하는 과정','중','생명'],['종','자연 상태에서 짝짓기를 하여 번식 능력이 있는 자손을 낳을 수 있는 생물 무리','중','생명'],
+['전도','고체에서 입자의 운동이 이웃한 입자에 차례로 전달되어 열이 이동하는 방식','중','에너지'],['대류','액체나 기체의 입자가 직접 이동하면서 열이 이동하는 방식','중','에너지'],['복사','열이 물질을 거치지 않고 직접 이동하는 방식','중','에너지'],['열평형','온도가 다른 두 물체가 접촉한 뒤 시간이 지나 온도가 같아진 상태','중','에너지'],['정전기','마찰 등으로 물체에 생긴 전기가 흐르지 않고 머물러 있는 것','중','에너지'],['전류','전하의 흐름','중','에너지'],['전압','전류를 흐르게 하는 능력','중','에너지'],['저항','전류의 흐름을 방해하는 정도','중','에너지'],['굴절','빛이 다른 물질로 진행할 때 경계면에서 꺾이는 현상','중','에너지'],
+['흑점','태양 표면에서 주변보다 온도가 낮아 어둡게 보이는 부분','중','지구와 우주'],['일식','달이 태양을 가리는 현상','중','지구와 우주'],['월식','달이 지구의 그림자 속에 들어가 가려지는 현상','중','지구와 우주'],['기압','공기가 단위 넓이에 작용하는 힘(압력)','중','지구와 우주'],
+['이온','원자가 전자를 잃거나 얻어 전하를 띠게 된 입자','상','물질'],['양이온','원자가 전자를 잃어 (+)전하를 띠는 입자','상','물질'],['음이온','원자가 전자를 얻어 (−)전하를 띠는 입자','상','물질'],['용해도','일정한 온도에서 용매 100g에 최대로 녹을 수 있는 용질의 g수','상','물질'],['보일 법칙','온도가 일정할 때 기체의 압력이 커지면 부피가 작아지는 관계','상','물질'],['샤를 법칙','압력이 일정할 때 기체의 온도가 높아지면 부피가 커지는 관계','상','물질'],
+['융털','소장 안쪽 벽에 있는 작은 돌기로, 영양소를 흡수하는 곳','상','생명'],['폐포','폐를 이루는 작은 공기주머니로, 기체 교환이 일어나는 곳','상','생명'],['네프론','콩팥에서 오줌을 만드는 기본 단위','상','생명'],['혈소판','상처가 났을 때 혈액을 굳게 하여 피를 멈추게 하는 혈액 성분','상','생명'],
+['비열','어떤 물질 1kg의 온도를 1℃ 높이는 데 필요한 열량','상','에너지'],['진폭','파동에서 진동 중심으로부터 마루 또는 골까지의 거리','상','에너지'],['파장','파동에서 마루와 이웃한 마루 사이의 거리','상','에너지'],['진동수','1초 동안 진동하는 횟수','상','에너지'],
+['포화 수증기량','공기 1kg 속에 최대로 포함될 수 있는 수증기의 양(g)','상','지구와 우주'],['기단','넓은 지역에 걸쳐 기온과 습도 등의 성질이 비슷한 큰 공기 덩어리','상','지구와 우주'],['전선','성질이 다른 두 기단이 만나는 경계면이 지표면과 만나는 선','상','지구와 우주']].map(a=>({t:a[0],d:a[1],lv:a[2],tp:a[3]}));
+function termDistr(pool,x,lv,key){let ds=upTo(pool,lv,1).filter(y=>y!==x&&y.tp===x.tp);if(ds.length<nc(lv)-1)ds=upTo(pool,lv,1).filter(y=>y!==x);return ds.map(y=>y[key]);}
+const S_TOPICS=['물질','힘과 운동','생명','지구와 우주','에너지'];
+for(const tp of S_TOPICS){
+  G(SS,tp,LV4,lv=>{const x=pickLv(S_TERM,lv,y=>y.tp===tp);if(!x)return null;return mc(`s-t1-${x.t}`,`다음 설명에 해당하는 용어는?${box(x.d)}`,x.t,termDistr(S_TERM,x,lv,'t'),nc(lv));},1.5);
+  G(SS,tp,LV4,lv=>{const x=pickLv(S_TERM,lv,y=>y.tp===tp);if(!x)return null;return mc(`s-t2-${x.t}`,`‘${x.t}’에 대한 설명으로 알맞은 것은?`,x.d,termDistr(S_TERM,x,lv,'d'),Math.min(nc(lv),4));});
+}
+const S_OX=[
+['물이 얼어 얼음이 되면 부피가 늘어난다.',1,'기초','물질'],['설탕을 물에 녹이면 설탕의 무게는 없어진다.',0,'기초','물질','설탕이 물에 녹아도 전체 무게는 변하지 않는다.'],
+['자석의 같은 극끼리는 서로 끌어당긴다.',0,'기초','힘과 운동','자석의 같은 극끼리는 서로 밀어낸다.'],['자석은 철로 된 물체를 끌어당긴다.',1,'기초','힘과 운동'],
+['지구는 하루에 한 바퀴씩 자전한다.',1,'기초','지구와 우주'],['달은 스스로 빛을 낸다.',0,'기초','지구와 우주','달은 햇빛을 반사하여 밝게 보인다.'],['화석을 보면 옛날에 살았던 생물의 모습을 짐작할 수 있다.',1,'기초','지구와 우주'],['지구는 태양 주위를 일 년에 한 바퀴씩 돈다.',1,'기초','지구와 우주'],
+['식물은 빛이 없어도 광합성을 할 수 있다.',0,'기초','생명','광합성을 하려면 빛이 필요하다.'],['식물의 뿌리는 물을 흡수한다.',1,'기초','생명'],
+['소리는 공기가 없는 곳에서도 잘 전달된다.',0,'기초','에너지','소리는 공기와 같은 물질이 있어야 전달된다.'],['거울에 비친 모습은 좌우가 바뀌어 보인다.',1,'기초','에너지'],['그림자는 빛이 물체를 통과하지 못해서 생긴다.',1,'기초','에너지'],
+['무게는 장소에 따라 달라질 수 있다.',1,'하','힘과 운동'],['질량은 장소에 따라 달라진다.',0,'하','힘과 운동','질량은 장소가 바뀌어도 변하지 않는다.'],['마찰력은 물체의 운동을 방해하는 방향으로 작용한다.',1,'하','힘과 운동'],['용수철을 당겼다 놓으면 원래 모양으로 돌아가려는 탄성력이 작용한다.',1,'하','힘과 운동'],
+['동물 세포에는 세포벽이 있다.',0,'하','생명','세포벽은 식물 세포에 있고, 동물 세포에는 없다.'],['식물의 잎을 이루는 세포에는 엽록체가 있다.',1,'하','생명'],
+['퇴적암에서는 화석이 발견되기도 한다.',1,'하','지구와 우주'],['화강암은 퇴적암이다.',0,'하','지구와 우주','화강암은 마그마가 땅속에서 식어 만들어진 화성암이다.'],
+['얼음이 녹아 물이 되는 현상을 응고라고 한다.',0,'하','물질','얼음이 녹아 물이 되는 현상은 융해이다.'],['드라이아이스의 크기가 점점 작아지는 것은 승화 때문이다.',1,'하','물질'],['향수 냄새가 방 안에 퍼지는 것은 확산 때문이다.',1,'하','물질'],
+['빛이 거울에 부딪혀 되돌아 나오는 현상을 반사라고 한다.',1,'하','에너지'],
+['물 분자는 수소 원자 2개와 산소 원자 1개로 이루어져 있다.',1,'중','물질'],['순물질은 녹는점과 끓는점이 일정하다.',1,'중','물질'],['같은 물질이라도 양이 많아지면 밀도가 커진다.',0,'중','물질','밀도는 물질의 양과 관계없이 일정하다.'],['원자는 원자핵과 전자로 이루어져 있다.',1,'중','물질'],
+['전압이 같을 때, 저항이 클수록 전류의 세기가 커진다.',0,'중','에너지','전압이 같으면 저항이 클수록 전류의 세기는 작아진다.'],['빛이 공기에서 물로 비스듬히 들어가면 경계면에서 꺾인다.',1,'중','에너지'],['열은 온도가 높은 물체에서 낮은 물체로 이동한다.',1,'중','에너지'],['금속은 열이 잘 전도되지 않는다.',0,'중','에너지','금속은 열이 잘 전도된다.'],
+['적혈구는 산소를 운반한다.',1,'중','생명'],['백혈구는 상처 난 곳의 피를 굳게 한다.',0,'중','생명','피를 굳게 하는 것은 혈소판이다.'],
+['일식은 달이 지구의 그림자 속에 들어갈 때 일어난다.',0,'중','지구와 우주','일식은 달이 태양을 가릴 때 일어난다.'],['태양의 흑점은 주변보다 온도가 높다.',0,'중','지구와 우주','흑점은 주변보다 온도가 낮아 어둡게 보인다.'],
+['양이온은 원자가 전자를 얻어서 생긴다.',0,'상','물질','양이온은 원자가 전자를 잃어서 생긴다.'],['압력이 일정할 때 기체의 온도가 높아지면 부피가 커진다.',1,'상','물질'],['온도가 일정할 때 기체에 압력을 가하면 부피가 커진다.',0,'상','물질','온도가 일정할 때 압력을 가하면 부피는 작아진다.'],['대부분의 고체는 온도가 높을수록 물에 대한 용해도가 커진다.',1,'상','물질'],
+['소장의 융털은 영양소를 흡수하는 표면적을 넓혀 준다.',1,'상','생명'],['폐포에서는 산소와 이산화 탄소의 교환이 일어난다.',1,'상','생명'],['혈소판은 산소를 운반한다.',0,'상','생명','산소를 운반하는 것은 적혈구이다.'],
+['비열이 큰 물질일수록 온도가 쉽게 변한다.',0,'상','에너지','비열이 큰 물질일수록 온도가 잘 변하지 않는다.'],['소리의 높낮이는 진폭과 관계가 있다.',0,'상','에너지','소리의 높낮이는 진동수와 관계가 있다.'],['소리의 크기는 진폭이 클수록 크다.',1,'상','에너지'],['직렬로 연결된 저항에는 같은 세기의 전류가 흐른다.',1,'상','에너지'],
+['기온이 높아지면 포화 수증기량이 커진다.',1,'상','지구와 우주']].map(a=>({s:a[0],o:a[1],lv:a[2],tp:a[3],fix:a[4]||''}));
+function oxGens(sub,data,topicOf,prefix){
+  const topics=uniq(data.map(topicOf));
+  for(const tp of topics){
+    G(sub,tp,LV4,lv=>{const x=pickLv(data,lv,y=>topicOf(y)===tp);if(!x)return null;return sa(`${prefix}-ox-${x.s}`,`다음 설명이 맞으면 O, 틀리면 X를 쓰세요.${box(x.s)}`,x.o?'O':'X',x.fix?`바르게 고치면: ${x.fix}`:'');});
+    G(sub,tp,LV4,lv=>{const x=pickLv(data,lv,y=>topicOf(y)===tp&&y.o);if(!x)return null;let ds=upTo(data,lv,1).filter(y=>!y.o&&topicOf(y)===tp);if(ds.length<2)ds=upTo(data,lv,1).filter(y=>!y.o);return mc(`${prefix}-tr-${x.s}`,'다음 중 옳은 것은?',x.s,ds.map(y=>y.s),Math.min(nc(lv),4));});
+    G(sub,tp,['중','상'],lv=>{const x=pickLv(data,lv,y=>topicOf(y)===tp&&!y.o);if(!x)return null;let ds=upTo(data,lv,1).filter(y=>y.o&&topicOf(y)===tp);if(ds.length<2)ds=upTo(data,lv,1).filter(y=>y.o);return mc(`${prefix}-fl-${x.s}`,'다음 중 옳지 <u>않은</u> 것은?',x.s,ds.map(y=>y.s),Math.min(nc(lv),4),x.fix?`바르게 고치면: ${x.fix}`:'');});
+  }
+}
+oxGens(SS,S_OX,x=>x.tp,'s');
+G(SS,'힘과 운동',['하','중','상'],lv=>{const t=R.ri(1,3);
+  if(t===1){const v=R.ri(2,20),s=R.ri(2,12);return sa(`s-v1-${v}-${s}`,`어떤 물체가 ${s}초 동안 ${v*s} m를 일정한 빠르기로 이동했습니다. 이 물체의 속력은 몇 m/s인가요?`,`${v} m/s`,'속력 = 이동 거리 ÷ 걸린 시간');}
+  if(t===2){const v=R.pick([30,40,50,60,80]),h=R.ri(2,4);return sa(`s-v2-${v}-${h}`,`자동차가 ${v} km/h의 일정한 속력으로 ${h}시간 동안 달렸습니다. 이동한 거리는 몇 km인가요?`,`${v*h} km`,'이동 거리 = 속력 × 걸린 시간');}
+  const k=R.ri(2,20);return sa(`s-w1-${k}`,`지구에서 무게가 ${6*k} N인 물체를 달에 가져가면 무게는 몇 N이 되나요? (달의 중력은 지구의 약 1/6이다.)`,`${k} N`);},1.2);
+G(SS,'힘과 운동',['중','상'],lv=>{const m=R.ri(2,30);return sa(`s-w2-${m}`,`지구에서 질량이 ${m} kg인 물체를 달에 가져가면 질량은 몇 kg인가요?`,`${m} kg`,'질량은 장소가 바뀌어도 변하지 않는다.');},0.5);
+G(SS,'물질',['중','상'],lv=>{const d=R.pick([1,2,3,4,5,8,10,11,13,19]),v=R.ri(2,20),t=R.ri(1,2);
+  if(t===1)return sa(`s-d1-${d}-${v}`,`질량이 ${d*v} g이고 부피가 ${v} cm³인 물체의 밀도는 몇 g/cm³인가요?`,`${d} g/cm³`,'밀도 = 질량 ÷ 부피');
+  return sa(`s-d2-${d}-${v}`,`밀도가 ${d} g/cm³인 물질 ${v} cm³의 질량은 몇 g인가요?`,`${d*v} g`,'질량 = 밀도 × 부피');},1.2);
+G(SS,'에너지',['상'],lv=>{const I=R.ri(1,5),Rr=R.ri(2,12),V=I*Rr,t=R.ri(1,3);
+  if(t===1)return sa(`s-o1-${I}-${Rr}`,`저항이 ${Rr} Ω인 니크롬선에 ${I} A의 전류가 흐를 때, 니크롬선에 걸린 전압은 몇 V인가요?`,`${V} V`,'전압 = 전류 × 저항');
+  if(t===2)return sa(`s-o2-${V}-${I}`,`어떤 저항에 ${V} V의 전압을 걸었더니 ${I} A의 전류가 흘렀습니다. 이 저항의 크기는 몇 Ω인가요?`,`${Rr} Ω`,'저항 = 전압 ÷ 전류');
+  return sa(`s-o3-${V}-${Rr}`,`${Rr} Ω인 저항에 ${V} V의 전압을 걸면 흐르는 전류는 몇 A인가요?`,`${I} A`,'전류 = 전압 ÷ 저항');},1.2);
+
+/* ===================== 역사 ===================== */
+const HS='역사';
+const ERA_K=['고조선','삼국','남북국','고려','조선','개항기·대한 제국','일제 강점기','현대'],ERA_W=['고대','중세','근대·현대'];
+const ERA_TOPIC={'고조선':'선사·고조선','삼국':'삼국·남북국','남북국':'삼국·남북국','고려':'고려','조선':'조선','개항기·대한 제국':'근현대','일제 강점기':'근현대','현대':'근현대','고대':'세계사','중세':'세계사','근대·현대':'세계사'};
+const H_EV=[
+['단군왕검이 고조선을 세움','고조선','단군왕검',null,'기초'],['8조법으로 사회 질서를 유지함','고조선','',null,'하'],
+['광개토대왕이 영토를 크게 넓힘','삼국','광개토대왕',null,'하'],['장수왕이 평양으로 도읍을 옮김','삼국','장수왕',427,'중'],['을지문덕이 살수에서 수나라 군대를 물리침','삼국','을지문덕',612,'하'],['근초고왕이 백제의 전성기를 이끎','삼국','근초고왕',null,'중'],['진흥왕이 한강 유역을 차지함','삼국','진흥왕',553,'중'],
+['대조영이 발해를 세움','남북국','대조영',698,'하'],['김대성이 불국사와 석굴암을 짓기 시작함','남북국','김대성',751,'중'],['장보고가 청해진을 설치함','남북국','장보고',828,'중'],
+['왕건이 고려를 세움','고려','왕건',918,'기초'],['서희가 외교 담판으로 강동 6주를 얻음','고려','서희',993,'중'],['강감찬이 귀주에서 거란군을 크게 물리침','고려','강감찬',1019,'하'],['팔만대장경을 새김','고려','',null,'하'],['직지심체요절을 금속 활자로 인쇄함','고려','',1377,'중'],['상감 청자를 만듦','고려','',null,'기초'],
+['이성계가 조선을 세움','조선','이성계',1392,'기초'],['세종이 훈민정음을 창제함','조선','세종',1443,'기초'],['장영실이 자격루를 만듦','조선','장영실',null,'하'],['이순신이 한산도 대첩에서 승리함','조선','이순신',1592,'기초'],['병자호란이 일어남','조선','',1636,'중'],['영조가 탕평책을 실시함','조선','영조',null,'중'],['정조가 수원 화성을 쌓음','조선','정조',null,'중'],['흥선 대원군이 경복궁을 다시 지음','조선','흥선 대원군',null,'상'],
+['강화도 조약을 맺음','개항기·대한 제국','',1876,'중'],['갑신정변이 일어남','개항기·대한 제국','김옥균',1884,'상'],['동학 농민 운동이 일어남','개항기·대한 제국','전봉준',1894,'중'],['대한 제국이 세워짐','개항기·대한 제국','고종',1897,'중'],['을사늑약이 강제로 체결됨','개항기·대한 제국','',1905,'상'],['안중근이 하얼빈에서 이토 히로부미를 처단함','개항기·대한 제국','안중근',1909,'하'],
+['3·1 운동이 일어남','일제 강점기','유관순',1919,'기초'],['대한민국 임시 정부가 상하이에서 수립됨','일제 강점기','',null,'중'],['윤봉길이 훙커우 공원에서 의거를 일으킴','일제 강점기','윤봉길',1932,'상'],
+['광복을 맞이함','현대','',1945,'기초'],['대한민국 정부가 수립됨','현대','',1948,'하'],['6·25 전쟁이 일어남','현대','',1950,'기초'],['4·19 혁명이 일어남','현대','',1960,'중'],['5·18 민주화 운동이 일어남','현대','',1980,'중'],['6월 민주 항쟁이 일어남','현대','',1987,'상'],['서울 올림픽이 열림','현대','',1988,'하'],
+['메소포타미아 문명에서 쐐기 문자를 사용함','고대','',null,'하'],['이집트 문명에서 피라미드를 만듦','고대','',null,'기초'],['인더스 문명에서 모헨조다로 같은 계획 도시를 건설함','고대','',null,'중'],['함무라비 왕이 법전을 만듦','고대','함무라비 왕',null,'중'],['진시황이 중국을 처음으로 통일함','고대','진시황',-221,'하'],['알렉산드로스 대왕이 동방 원정을 떠남','고대','알렉산드로스 대왕',-334,'상'],['로마 제국이 크리스트교를 공인함','고대','콘스탄티누스 황제',313,'상'],
+['무함마드가 이슬람교를 창시함','중세','무함마드',null,'중'],['십자군 전쟁이 시작됨','중세','',1096,'중'],['칭기즈 칸이 몽골 제국을 세움','중세','칭기즈 칸',1206,'중'],
+['콜럼버스가 아메리카에 도착함','근대·현대','콜럼버스',1492,'중'],['루터가 종교 개혁을 시작함','근대·현대','루터',1517,'상'],['미국이 독립 선언을 발표함','근대·현대','',1776,'중'],['프랑스 혁명이 일어남','근대·현대','',1789,'중'],['제1차 세계 대전이 일어남','근대·현대','',1914,'중'],['제2차 세계 대전이 일어남','근대·현대','',1939,'중']].map(a=>({n:a[0],e:a[1],p:a[2],y:a[3],lv:a[4],w:ERA_W.includes(a[1])}));
+const ERA_NAME=e=>e;
+const eraLeak=x=>x.n.includes(x.e)||(x.e==='개항기·대한 제국'&&x.n.includes('대한 제국'));
+const noP=x=>x.p?x.n.replace(new RegExp('^'+x.p+'(이|가) '),''):x.n;
+const maskP=x=>x.n.replace(new RegExp('^'+x.p+'(이|가) '),'(　　　)이(가) ');
+for(const tp of uniq(Object.values(ERA_TOPIC))){
+  const inT=x=>ERA_TOPIC[x.e]===tp;
+  G(HS,tp,LV4,lv=>{const x=pickLv(H_EV,lv,y=>inT(y)&&!eraLeak(y));if(!x)return null;const eras=x.w?ERA_W:ERA_K;return mc(`h-era-${x.n}`,`다음 일이 있었던 ${x.w?'세계사의 시기':'시대'}는 언제인가요?${box(x.n)}`,ERA_NAME(x.e),eras.filter(e=>e!==x.e).map(ERA_NAME),nc(lv));},1.3);
+  G(HS,tp,LV4,lv=>{const x=pickLv(H_EV,lv,y=>inT(y)&&!eraLeak(y));if(!x)return null;return mc(`h-inera-${x.n}`,x.w?`세계사에서 <b>${x.e}</b>에 있었던 일은?`:`다음 중 <b>${x.e}</b> 시대에 있었던 일은?`,x.n,upTo(H_EV,lv,1).filter(y=>y.e!==x.e&&y.w===x.w&&!eraLeak(y)).map(y=>y.n),nc(lv));});
+  G(HS,tp,LV4,lv=>{const x=pickLv(H_EV,lv,y=>inT(y)&&y.p);if(!x)return null;return mc(`h-per-${x.n}`,`다음 일과 가장 관계 깊은 인물은?${box(maskP(x))}`,x.p,H_EV.filter(y=>y.p&&y.p!==x.p&&y.w===x.w).map(y=>y.p),nc(lv));});
+  G(HS,tp,LV4,lv=>{const x=pickLv(H_EV,lv,y=>inT(y)&&y.p);if(!x)return null;return mc(`h-per2-${x.n}`,`‘${x.p}’와(과) 가장 관계 깊은 일은?`,noP(x),upTo(H_EV,lv,1).filter(y=>y.p!==x.p&&y.w===x.w).map(noP),nc(lv));});
+}
+G(HS,'시대 흐름',['중','상'],lv=>{const w=Math.random()<0.3;const pool=upTo(H_EV,lv).filter(y=>y.y!=null&&y.w===w);const k=nc(lv);const pick=[];const ys=new Set();for(const y of R.shuffle(pool)){if(ys.has(y.y))continue;ys.add(y.y);pick.push(y);if(pick.length===k)break;}if(pick.length<3)return null;
+  const first=Math.random()<0.5;const c=pick.reduce((a,b)=>first?(b.y<a.y?b:a):(b.y>a.y?b:a));const opts=R.shuffle(pick);
+  return mcFixed(`h-chr-${first}-${pick.map(p=>p.n).sort().join('/')}`,`다음 중 가장 ${first?'먼저':'나중에'} 일어난 일은?`,opts.map(o=>o.n),opts.indexOf(c),opts.slice().sort((a,b)=>a.y-b.y).map(o=>`${o.n}(${o.y<0?'기원전 '+(-o.y):o.y}년)`).join(' → '));},1.5);
+const H_TERM=[['훈민정음','‘백성을 가르치는 바른 소리’라는 뜻으로 세종이 만든 우리 글자','기초','조선'],['측우기','비가 내린 양을 재는 조선 시대의 기구','기초','조선'],['과거제','시험을 통해 관리를 뽑는 제도','하','고려'],['고인돌','청동기 시대의 대표적인 무덤','하','선사·고조선'],['빗살무늬 토기','신석기 시대의 대표적인 토기','하','선사·고조선'],['뗀석기','돌을 깨뜨리거나 떼어 내어 만든 구석기 시대의 도구','하','선사·고조선'],['간석기','돌을 갈아서 만든 신석기 시대의 도구','하','선사·고조선'],['의병','나라가 위기에 처했을 때 백성들이 스스로 일어나 싸운 군대','하','조선'],
+['탕평책','붕당 사이의 다툼을 줄이기 위해 인재를 고르게 등용한 정책','중','조선'],['실학','조선 후기에 백성의 실생활에 도움이 되는 학문을 연구하자는 움직임','중','조선'],['골품제','신라에서 혈통에 따라 신분을 나눈 제도','중','삼국·남북국'],['산업 혁명','18세기 후반 영국에서 시작된, 기계 사용에 따른 생산 기술과 사회의 큰 변화','중','세계사'],['십자군 전쟁','크리스트교 세력이 성지 예루살렘을 되찾겠다며 일으킨 전쟁','중','세계사'],['창씨개명','일제가 우리 민족에게 일본식 성과 이름으로 바꾸도록 강요한 정책','중','근현대'],
+['봉건제','왕이 제후나 기사에게 땅을 나누어 주고 충성을 약속받는 제도','상','세계사'],['르네상스','14세기 이탈리아에서 시작된, 고대 그리스·로마 문화를 되살리려는 문화 운동','상','세계사'],['종교 개혁','16세기에 루터 등이 가톨릭교회의 잘못을 비판하며 일으킨 개혁 운동','상','세계사'],['헬레니즘 문화','알렉산드로스 대왕의 원정 이후 그리스 문화와 동방 문화가 합쳐진 문화','상','세계사'],['독립 협회','서재필 등이 만들어 자주독립과 백성의 권리 향상을 주장한 단체','상','근현대'],['물산 장려 운동','우리 손으로 만든 물건을 쓰자는 경제적 민족 운동','상','근현대']].map(a=>({t:a[0],d:a[1],lv:a[2],tp:a[3]}));
+for(const tp of uniq(H_TERM.map(x=>x.tp))){
+  G(HS,tp,LV4,lv=>{const x=pickLv(H_TERM,lv,y=>y.tp===tp);if(!x)return null;return mc(`h-term-${x.t}`,`다음 설명에 해당하는 것은?${box(x.d)}`,x.t,upTo(H_TERM,lv,1).filter(y=>y!==x).map(y=>y.t),nc(lv));});
+}
+const H_OX=[['세종 대왕은 훈민정음을 만들었다.',1,'기초','조선'],['이순신은 임진왜란 때 바다에서 왜군을 물리쳤다.',1,'기초','조선'],['고려를 세운 사람은 이성계이다.',0,'기초','고려','고려를 세운 사람은 왕건이다.'],['조선을 세운 사람은 왕건이다.',0,'기초','조선','조선을 세운 사람은 이성계이다.'],['3·1 운동은 1919년에 일어났다.',1,'기초','근현대'],['광복을 맞이한 날은 1945년 8월 15일이다.',1,'기초','근현대'],['6·25 전쟁은 1950년에 일어났다.',1,'기초','근현대'],['고조선은 우리 역사에서 처음으로 세워진 나라이다.',1,'기초','선사·고조선'],['피라미드는 고대 이집트에서 만들어졌다.',1,'기초','세계사'],['고려청자는 조선 시대에 처음 만들어졌다.',0,'기초','고려','고려청자는 고려 시대에 만들어졌다.'],['유관순은 3·1 운동에 참여했다.',1,'기초','근현대'],['한글날은 훈민정음 반포를 기념하는 날이다.',1,'기초','조선'],['경복궁은 조선의 궁궐이다.',1,'기초','조선'],
+['수원 화성은 정조 때 만들어졌다.',1,'하','조선'],['발해를 세운 사람은 대조영이다.',1,'하','삼국·남북국'],['팔만대장경은 조선 시대에 만들어졌다.',0,'하','고려','팔만대장경은 고려 시대에 만들어졌다.'],['안중근은 하얼빈에서 이토 히로부미를 처단했다.',1,'하','근현대'],['진시황은 중국을 처음으로 통일하였다.',1,'하','세계사'],['구석기 시대 사람들은 간석기를 주로 사용했다.',0,'하','선사·고조선','구석기 시대 사람들은 뗀석기를 사용했다.'],
+['강화도 조약은 조선이 일본과 맺은 불평등 조약이다.',1,'중','근현대'],['임진왜란은 청나라가 조선을 침략한 전쟁이다.',0,'중','조선','임진왜란은 일본이 조선을 침략한 전쟁이다.'],['병자호란은 일본이 조선을 침략한 전쟁이다.',0,'중','조선','병자호란은 청나라가 조선을 침략한 전쟁이다.'],['4·19 혁명은 이승만 정부의 부정 선거에 맞서 일어났다.',1,'중','근현대'],['대한민국 임시 정부는 상하이에서 수립되었다.',1,'중','근현대'],['신라에는 골품제라는 신분 제도가 있었다.',1,'중','삼국·남북국'],['고구려의 장수왕은 도읍을 평양으로 옮겼다.',1,'중','삼국·남북국'],['프랑스 혁명은 1789년에 일어났다.',1,'중','세계사'],['산업 혁명은 미국에서 처음 시작되었다.',0,'중','세계사','산업 혁명은 영국에서 처음 시작되었다.'],
+['갑신정변은 동학 농민들이 일으켰다.',0,'상','근현대','갑신정변은 김옥균 등 급진 개화파가 일으켰다.'],['을사늑약으로 일본은 대한 제국의 외교권을 빼앗았다.',1,'상','근현대'],['루터는 종교 개혁을 이끌었다.',1,'상','세계사'],['콜럼버스는 1492년에 아메리카에 도착했다.',1,'상','세계사'],['함무라비 법전은 이집트 문명의 법전이다.',0,'상','세계사','함무라비 법전은 메소포타미아 문명의 법전이다.'],['서희는 외교 담판으로 강동 6주를 얻었다.',1,'상','고려']].map(a=>({s:a[0],o:a[1],lv:a[2],tp:a[3],fix:a[4]||''}));
+oxGens(HS,H_OX,x=>x.tp,'h');
+
+/* ===================== 학생 특징 → 주제 추천 ===================== */
+const KW={
+ '수학':{'덧셈':'덧셈|더하기|받아올림|연산|사칙','뺄셈':'뺄셈|빼기|받아내림|연산|사칙','곱셈구구':'구구단|곱셈|연산','세 자리 수 계산':'세 자리|덧셈|뺄셈|연산','곱셈':'곱셈|곱하기|연산','나눗셈':'나눗셈|나누기|몫|나머지|연산','분수':'분수|약분|통분','소수':'소수점|소수 계산|소수의|소수(?!인)','혼합 계산':'혼합|계산 순서|사칙|연산','문장제':'문장제|서술형|문제 이해|이해|활용|문제를 읽','약수와 배수':'약수|배수|공약수|공배수','비와 비율':'비율|백분율|퍼센트|%|비와','도형':'도형|넓이|둘레|평면','평균':'평균|자료','정수의 덧셈과 뺄셈':'정수|음수|양수|부호','소인수분해':'소인수|인수분해|소수(?!점)','문자와 식':'문자|식의 값|대입','일차방정식':'방정식|일차방정식|이항','최대공약수와 최소공배수':'약수|배수|공약수|공배수','정수의 곱셈과 나눗셈':'정수|음수|부호','정수의 혼합 계산':'정수|음수|혼합|계산 순서','일차식의 계산':'일차식|동류항|문자|식의 계산','좌표평면':'좌표|사분면|그래프','정비례와 반비례':'정비례|반비례|비례|그래프|함수','방정식의 활용':'활용|문장제|서술형','유리수의 계산':'유리수|분수|음수','유한소수와 순환소수':'순환소수|유한소수|소수','지수법칙':'지수|거듭제곱','단항식의 계산':'단항식|지수|식의 계산','다항식의 계산':'다항식|동류항|식의 계산','일차부등식':'부등식','연립방정식':'연립|방정식','일차함수':'일차함수|함수|그래프|기울기|절편','식의 대입':'대입|식의 값|문자','연립방정식의 활용':'연립|활용|문장제|서술형','일차부등식의 활용':'부등식|활용|문장제|서술형','등식의 변형':'등식|변형|문자'},
+ '영어':{'어휘':'어휘|단어|뜻|낱말|voca','철자':'철자|스펠링|쓰기|spelling','be동사':'be동사|be 동사|문법','관사(a/an)':'관사|a/an|문법','복수형':'복수|명사|문법','3인칭 단수':'3인칭|단수|현재|동사|문법','현재진행형':'진행|ing|문법','과거형':'과거|시제|동사|문법','조동사':'조동사|can|will|문법','비교급·최상급':'비교|최상급|문법','to부정사·동명사':'부정사|동명사|문법','수동태':'수동태|문법','현재완료':'현재완료|완료|시제|문법','관계대명사':'관계대명사|관계사|문법'},
+ '국어':{'맞춤법':'맞춤법|철자|받아쓰기|띄어쓰기|어법|쓰기','어휘':'어휘|낱말|단어|반대말|높임|어휘력','속담·사자성어':'속담|사자성어|관용|한자|어휘','문법':'문법|품사|단어의 짜임|합성|파생','문학':'문학|시|소설|비유|표현|감상','독해':'읽기|독해|이해|내용 파악|중심|글을 읽','설명 방법':'설명 방법|설명문|논설문|비문학|글의 종류|읽기'},
+ '과학':{'물질':'물질|상태 변화|상태|원소|원자|분자|밀도|화학|녹|이온','힘과 운동':'힘|운동|속력|중력|마찰|물리|무게|질량','생명':'생물|생명|세포|식물|동물|몸|소화|혈액|호흡','지구와 우주':'지구|암석|우주|날씨|기상|태양|달|지층|화석','에너지':'열|빛|소리|전기|에너지|파동|전류|전압'},
+ '역사':{'선사·고조선':'선사|고조선|석기|청동기','삼국·남북국':'삼국|신라|백제|고구려|발해|통일 신라|남북국','고려':'고려','조선':'조선|세종|임진왜란','근현대':'근대|현대|근현대|일제|독립|광복|민주|개항','세계사':'세계|서양|유럽|중국|문명','시대 흐름':'순서|흐름|연도|연표|시대 구분|시대를|시기'}
+};
+function matchTopics(sub,lv,note){
+  if(!note||!note.trim())return [];const av=topicsFor(sub,lv);const out=[];
+  for(const t of av){const re=KW[sub]&&KW[sub][t];if(re&&new RegExp(re,'i').test(note))out.push(t);}
+  return out;
+}
+
+/* ===================== 국어 2-2 2차 시험 범위 (천재(노) p.118~201) ===================== */
+const ncE=lv=>[3,4,5,5][LV4.indexOf(lv)];
+const BG=['ㄱ','ㄴ','ㄷ','ㄹ'];
+function bogiBox(stmts){return `<div class="qbox"><b>&lt;보기&gt;</b><br>${stmts.map((s,i)=>`${BG[i]}. ${s.s||s}`).join('<br>')}</div>`;}
+function bogiMC(id,q,stmts,n,exp){
+  const k=stmts.length,ok=stmts.map((s,i)=>s.ok?i:-1).filter(i=>i>=0);if(!ok.length)return null;
+  const all=[];for(let m=1;m<(1<<k);m++){const a=[];for(let i=0;i<k;i++)if(m>>i&1)a.push(i);all.push(a);}
+  const key=a=>a.map(i=>BG[i]).join(', '),ck=key(ok);
+  let pick=[ok,...R.sample(all.filter(a=>key(a)!==ck),Math.min(n,all.length)-1)];
+  pick.sort((a,b)=>a.length-b.length||a.join('').localeCompare(b.join('')));
+  const ch=pick.map(key);return mcFixed(id,q+bogiBox(stmts),ch,ch.indexOf(ck),exp);
+}
+// 한글 분해
+const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split(''),JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ'.split(''),JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+function jamo(w){const o={cho:[],jung:[],jong:[]};for(const ch of w){const c=ch.charCodeAt(0)-0xAC00;if(c<0||c>11171)continue;o.cho.push(CHO[Math.floor(c/588)]);o.jung.push(JUNG[Math.floor((c%588)/28)]);const j=JONG[c%28];if(j)o.jong.push(j);}return o;}
+const KWORDS=['토끼','지갑','우비','불빛','시금치','사과','바다','나무','구름','하늘','고래','도토리','자전거','연필','의자','학교','친구','기차','딸기','쌀밥','짜장면','파도','코끼리','주전자','머리','누나','강아지','호랑이','거울','양말','우유','요리','여우','야구','휴지','의사','예술','과자','왜가리','원숭이','외국','해바라기','개구리','노래','라면','뿌리','빵','떡','쓰레기','찌개','치마','컵','타조','포도','하마','오리','두부','모자','부채','수박','배추','감자','김치','꽃','달','별','손','발','물','소나무','고구마','사자','다리','코','바지','토마토','피자','카드'];
+
+/* --- 음운 체계 --- */
+const KT1='음운 체계';
+// 단모음: [글자, 전설(1)/후설(0), 원순(1)/평순(0), 높이 0고 1중 2저]
+const SV=[['ㅣ',1,0,0],['ㅟ',1,1,0],['ㅡ',0,0,0],['ㅜ',0,1,0],['ㅔ',1,0,1],['ㅚ',1,1,1],['ㅓ',0,0,1],['ㅗ',0,1,1],['ㅐ',1,0,2],['ㅏ',0,0,2]].map(a=>({v:a[0],f:a[1],r:a[2],h:a[3]}));
+const DV='ㅑㅒㅕㅖㅘㅙㅛㅝㅞㅠㅢ'.split('');
+const HN=['고모음','중모음','저모음'],FN=f=>f?'전설 모음':'후설 모음',RN=r=>r?'원순 모음':'평순 모음';
+const PL={'입술소리':'두 입술 사이','잇몸소리':'혀끝과 윗잇몸 사이','센입천장소리':'혓바닥과 센입천장 사이','여린입천장소리':'혀의 뒷부분과 여린입천장 사이','목청소리':'목청 사이'};
+const CS=[['ㅂ','입술소리','파열음','예사소리'],['ㅃ','입술소리','파열음','된소리'],['ㅍ','입술소리','파열음','거센소리'],['ㅁ','입술소리','비음',''],['ㄷ','잇몸소리','파열음','예사소리'],['ㄸ','잇몸소리','파열음','된소리'],['ㅌ','잇몸소리','파열음','거센소리'],['ㅅ','잇몸소리','마찰음','예사소리'],['ㅆ','잇몸소리','마찰음','된소리'],['ㄴ','잇몸소리','비음',''],['ㄹ','잇몸소리','유음',''],['ㅈ','센입천장소리','파찰음','예사소리'],['ㅉ','센입천장소리','파찰음','된소리'],['ㅊ','센입천장소리','파찰음','거센소리'],['ㄱ','여린입천장소리','파열음','예사소리'],['ㄲ','여린입천장소리','파열음','된소리'],['ㅋ','여린입천장소리','파열음','거센소리'],['ㅇ','여린입천장소리','비음',''],['ㅎ','목청소리','마찰음','']].map(a=>({c:a[0],p:a[1],m:a[2],s:a[3]}));
+const cDesc=x=>`${PL[x.p]}에서 나는 ${x.p}이며, ${x.m}${x.s?`이고 ${x.s}`:''}인 자음`;
+G(KS,KT1,LV4,lv=>{const dip=Math.random()<0.5;const c=dip?R.pick(DV):R.pick(SV).v;const ds=dip?SV.map(x=>x.v):DV;return mc(`k2-dv-${c}`,`다음 중 <b>${dip?'이중 모음':'단모음'}</b>인 것은?`,c,ds,ncE(lv),dip?'이중 모음: 발음할 때 입술 모양이나 혀의 위치가 변하는 모음':'단모음: 발음할 때 입술 모양이나 혀의 위치가 변하지 않는 모음');},1.2);
+G(KS,KT1,LV4,lv=>{const x=R.pick(CS);return mc(`k2-cp-${x.c}`,`자음 ‘${x.c}’의 소리 나는 위치로 알맞은 것은?`,x.p,Object.keys(PL),ncE(lv),`‘${x.c}’: ${PL[x.p]}에서 나는 ${x.p}`);});
+G(KS,KT1,['하','중','상'],lv=>{const x=R.pick(SV);const tr=[`${FN(x.f)}이다.`,`${RN(x.r)}이다.`,`${HN[x.h]}이다.`];const fl=[`${FN(1-x.f)}이다.`,`${RN(1-x.r)}이다.`,...HN.filter((_,i)=>i!==x.h).map(h=>`${h}이다.`),'발음하는 도중에 입술 모양이나 혀의 위치가 변한다.'];const t=R.pick(tr);
+  return mc(`k2-vf-${x.v}-${t}`,`모음 ‘${x.v}’에 대한 설명으로 옳은 것은?`,t,fl,ncE(lv),`‘${x.v}’: ${FN(x.f)}, ${RN(x.r)}, ${HN[x.h]}`);});
+G(KS,KT1,['중','상'],lv=>{const x=R.pick(SV);return mc(`k2-v3-${x.v}`,`다음 설명에 모두 해당하는 단모음은?${box(`• 혀의 최고점이 입안의 ${x.f?'앞쪽':'뒤쪽'}에 있다.<br>• 입술을 ${x.r?'둥글게 오므려':'둥글게 오므리지 않고'} 발음한다.<br>• ${['입을 조금 열고 혀의 높이를 높여','혀의 높이를 중간으로 하여','입을 크게 벌리고 혀의 높이를 가장 낮추어'][x.h]} 발음한다.`)}`,x.v,SV.filter(y=>y!==x).map(y=>y.v),ncE(lv),`${FN(x.f)}·${RN(x.r)}·${HN[x.h]}`);},1.2);
+G(KS,KT1,['중','상'],lv=>{const x=R.pick(CS);return mc(`k2-c3-${x.c}`,`다음 설명에 해당하는 자음은?${box(cDesc(x)+'이다.')}`,x.c,CS.filter(y=>y!==x).map(y=>y.c),ncE(lv));},1.2);
+G(KS,KT1,['하','중','상'],lv=>{const byP=uniq(CS.map(x=>x.p));const p=R.pick(byP.filter(p=>CS.filter(x=>x.p===p).length>1));const same=R.sample(CS.filter(x=>x.p===p),2);const c=`${same[0].c} – ${same[1].c}`;
+  const ds=[];for(let i=0;i<40&&ds.length<6;i++){const a=R.sample(CS,2);if(a[0].p!==a[1].p)ds.push(`${a[0].c} – ${a[1].c}`);}
+  return mc(`k2-cpair-${same.map(s=>s.c).sort().join('')}`,'소리 나는 위치가 서로 같은 자음끼리 묶인 것은?',c,ds,ncE(lv),`${same[0].c}, ${same[1].c}: 모두 ${p}`);});
+G(KS,KT1,['하','중','상'],lv=>{const st=R.pick(['예사소리','된소리','거센소리']);const pool=CS.filter(x=>x.s);const set=pool.filter(x=>x.s===st).map(x=>x.c);const c=set.slice(0,3).join(', ');
+  const ds=['예사소리','된소리','거센소리'].filter(s=>s!==st).map(s=>pool.filter(x=>x.s===s).map(x=>x.c).slice(0,3).join(', '));ds.push('ㅁ, ㄴ, ㅇ','ㄹ, ㅎ, ㅇ');return mc(`k2-str-${st}`,`다음 중 <b>${st}</b>로만 묶인 것은?`,c,ds,ncE(lv));});
+const KMP=[['달','돌','V'],['물','몰','V'],['발','벌','V'],['산','선','V'],['눈','논','V'],['손','선','V'],['굴','골','V'],['밤','범','V'],['말','멀','V'],['감','잠','C'],['밥','밤','C'],['발','말','C'],['불','풀','C'],['공','콩','C'],['달','탈','C'],['강','방','C'],['꿈','꿀','C'],['산','살','C'],['국','죽','C'],['불','뿔','C']];
+G(KS,KT1,['중','상'],lv=>{const t=R.pick(['V','C']);const k=lv==='상'?4:3;let ps;for(let i=0;i<30;i++){ps=R.sample(KMP,k);if(ps.some(p=>p[2]===t))break;}if(!ps.some(p=>p[2]===t))return null;
+  return bogiMC(`k2-mp-${t}-${ps.map(p=>p[0]+p[1]).join('')}`,`&lt;보기&gt;에서 <b>${t==='V'?'모음':'자음'}</b>의 차이로 뜻이 구별되는 단어 쌍만을 있는 대로 고른 것은?`,ps.map(p=>({s:`${p[0]} – ${p[1]}`,ok:p[2]===t})),ncE(lv),ps.map(p=>`${p[0]}–${p[1]}: ${p[2]==='V'?'모음':'자음'}`).join(' / '));});
+G(KS,KT1,['상'],lv=>{const x=R.pick(CS.filter(c=>c.c!=='ㅇ'));const info=KWORDS.map(w=>({w,j:jamo(w)}));const has=info.filter(o=>o.j.cho.includes(x.c)),no=info.filter(o=>!o.j.cho.includes(x.c)&&!o.j.jong.includes(x.c));if(!has.length)return null;const w=R.pick(has).w;
+  return mc(`k2-cw-${x.c}-${w}`,`&lt;보기&gt;의 자음이 첫소리로 쓰인 단어로 알맞은 것은?${box(cDesc(x))}`,w,no.map(o=>o.w),5,`‘${x.c}’이(가) 쓰인 단어: ${w}`);});
+G(KS,KT1,['중','상'],lv=>{const info=KWORDS.map(w=>({w,j:jamo(w)}));const dip=Math.random()<0.5;
+  if(dip){const has=info.filter(o=>o.j.jung.some(v=>DV.includes(v))),no=info.filter(o=>o.j.jung.every(v=>SV.some(s=>s.v===v)&&v!=='ㅚ'&&v!=='ㅟ'));const w=R.pick(has).w;return mc(`k2-dw-${w}`,'다음 중 <b>이중 모음</b>이 쓰인 단어는?',w,no.map(o=>o.w),ncE(lv));}
+  const x=R.pick(SV.filter(s=>s.v!=='ㅚ'&&s.v!=='ㅟ'));const has=info.filter(o=>o.j.jung.includes(x.v)),no=info.filter(o=>!o.j.jung.includes(x.v));if(!has.length)return null;const w=R.pick(has).w;
+  return mc(`k2-vw-${x.v}-${w}`,`&lt;보기&gt;의 설명에 해당하는 모음이 쓰인 단어는?${box(`${FN(x.f)}이면서 ${RN(x.r)}이고, ${HN[x.h]}인 단모음`)}`,w,no.map(o=>o.w),ncE(lv),`해당 모음: ‘${x.v}’`);});
+function vChange(a,b){const st=[];const rnd=()=>Math.random()<0.5;
+  const fT=a.f===b.f?'혀의 최고점의 위치는 변하지 않는다.':`혀의 최고점이 입안의 ${a.f?'앞쪽에서 뒤쪽':'뒤쪽에서 앞쪽'}으로 옮겨 간다.`;
+  const fF=a.f===b.f?`혀의 최고점이 입안의 ${a.f?'앞쪽에서 뒤쪽':'뒤쪽에서 앞쪽'}으로 옮겨 간다.`:'혀의 최고점의 위치는 변하지 않는다.';
+  const rT=a.r===b.r?'입술 모양은 변하지 않는다.':`입술 모양이 ${a.r?'원순에서 평순':'평순에서 원순'}으로 바뀐다.`;
+  const rF=a.r===b.r?`입술 모양이 ${a.r?'원순에서 평순':'평순에서 원순'}으로 바뀐다.`:'입술 모양은 변하지 않는다.';
+  const hd=b.h-a.h,hT=hd===0?'혀의 높이는 변하지 않는다.':hd>0?'혀의 높이가 낮아진다.':'혀의 높이가 높아진다.',hF=hd===0?'혀의 높이가 낮아진다.':hd>0?'혀의 높이가 높아진다.':'혀의 높이는 변하지 않는다.';
+  for(const [t,f] of [[fT,fF],[rT,rF],[hT,hF]]){const ok=rnd();st.push({s:ok?t:f,ok});}return st;}
+G(KS,KT1,['중','상'],lv=>{const [a,b]=R.sample(SV,2);const st=vChange(a,b);return bogiMC(`k2-vc-${a.v}${b.v}-${st.map(s=>+s.ok).join('')}`,`‘${a.v}’를 발음하다가 ‘${b.v}’를 발음할 때 일어나는 변화로 옳은 것만을 &lt;보기&gt;에서 있는 대로 고른 것은?`,st,ncE(lv),`‘${a.v}’(${FN(a.f)}·${RN(a.r)}·${HN[a.h]}) → ‘${b.v}’(${FN(b.f)}·${RN(b.r)}·${HN[b.h]})`);},1.3);
+const VPAIRS=[];for(const a of SV)for(const b of SV){if(a===b)continue;const d=(a.f!==b.f)+(a.r!==b.r)+(a.h!==b.h);if(d===1)VPAIRS.push([a,b]);}
+G(KS,KT1,['중','상'],lv=>{const [a,b]=R.pick(VPAIRS);let crit,ans;
+  if(a.f!==b.f){crit='혀의 최고점의 위치';ans=`‘${a.v}’는 ${FN(a.f)}이고 ‘${b.v}’는 ${FN(b.f)}이므로, ‘${a.v}’는 ‘${b.v}’보다 혀의 최고점을 입안의 더 ${a.f?'앞쪽':'뒤쪽'}에 두고 발음한다.`;}
+  else if(a.r!==b.r){crit='입술 모양';ans=`‘${a.v}’는 ${RN(a.r)}이고 ‘${b.v}’는 ${RN(b.r)}이므로, ‘${a.v}’는 ${a.r?'입술을 둥글게 오므려':'입술을 둥글게 오므리지 않고'} 발음한다.`;}
+  else{crit='혀의 높이';ans=`‘${a.v}’는 ${HN[a.h]}이고 ‘${b.v}’는 ${HN[b.h]}이므로, ‘${a.v}’는 ‘${b.v}’보다 ${a.h>b.h?'입을 더 크게 벌리고 혀의 높이를 낮추어':'입을 덜 벌리고 혀의 높이를 높여'} 발음한다.`;}
+  return sa(`k2-vd-${a.v}${b.v}`,`<b>[서술형]</b> 모음 ‘${a.v}’와 ‘${b.v}’를 구별하여 발음하는 방법을 &lt;조건&gt;에 맞게 쓰시오.${box(`&lt;조건&gt; ① 두 모음이 무엇에 따라 구별되는지 분류 기준(${'혀의 최고점의 위치, 입술 모양, 혀의 높이'} 중 하나)을 밝힐 것. ② ‘${a.v}’를 발음하는 방법을 한 문장으로 쓸 것.`)}`,ans,`채점: 분류 기준 ‘${crit}’과 두 모음의 분류 명칭을 바르게 썼는가`);},0.8);
+G(KS,KT1,['기초','하'],lv=>sa('k2-def','<b>[서술형]</b> 다음 빈칸에 알맞은 말을 쓰시오.'+box('음운: 말의 (　　　)을/를 구별해 주는 소리의 가장 작은 단위'),'뜻'));
+const K2_PH=[['음운은 말의 뜻을 구별해 주는 소리의 가장 작은 단위이다.',1,'기초'],['우리말의 음운에는 모음, 자음, 소리의 길이 등이 있다.',1,'하'],['모음은 공기의 흐름이 장애를 받지 않고 나는 소리이다.',1,'기초'],['자음은 공기의 흐름이 장애를 받고 나는 소리이다.',1,'기초'],['자음은 모음 없이 홀로 발음하기 어렵다.',1,'하'],['우리말의 단모음은 10개, 이중 모음은 11개이다.',1,'중'],['‘ㅚ, ㅟ’는 단모음으로 발음하는 것이 원칙이지만 이중 모음으로 발음하는 것도 허용된다.',1,'중'],['‘눈[눈]’과 ‘눈[눈ː]’처럼 소리의 길이에 따라 뜻이 구별되는 단어도 있다.',1,'하'],['음성은 사람마다 다르게 나는 구체적인 말소리이다.',1,'중'],['자음은 소리 나는 위치, 소리 내는 방법, 소리의 세기에 따라 분류할 수 있다.',1,'중'],
+['모음은 공기의 흐름이 장애를 받으며 나는 소리이다.',0,'기초','모음은 공기의 흐름이 장애를 받지 않고 나는 소리이다.'],['소리의 길이는 뜻을 구별하지 못하므로 음운이 아니다.',0,'하','소리의 길이도 뜻을 구별하므로 음운에 포함된다.'],['우리말의 자음은 모두 14개이다.',0,'중','우리말의 자음은 ㄲ, ㄸ, ㅃ, ㅆ, ㅉ을 포함해 19개이다.'],['이중 모음은 발음할 때 입술 모양이나 혀의 위치가 변하지 않는다.',0,'하','이중 모음은 발음할 때 입술 모양이나 혀의 위치가 변한다.'],['‘ㅐ’와 ‘ㅔ’는 이중 모음이다.',0,'중','‘ㅐ’와 ‘ㅔ’는 단모음이다.'],['음운은 사람마다 다르게 나는 구체적인 말소리이다.',0,'중','음운은 머릿속에서 같은 소리로 인식하는 추상적인 말소리이다.'],['‘ㄹ’은 비음이다.',0,'중','‘ㄹ’은 유음이다.'],['‘ㅋ, ㅌ, ㅍ, ㅊ’은 된소리이다.',0,'하','‘ㅋ, ㅌ, ㅍ, ㅊ’은 거센소리이다.'],['‘ㅅ’과 ‘ㅈ’은 소리 나는 위치가 같다.',0,'상','‘ㅅ’은 잇몸소리, ‘ㅈ’은 센입천장소리이다.'],['‘ㅏ’는 전설 모음이다.',0,'상','‘ㅏ’는 후설 모음이다.']].map(a=>({s:a[0],o:a[1],lv:a[2],tp:KT1,fix:a[3]||''}));
+
+/* --- 훈민정음과 한글 --- */
+const KT2='훈민정음과 한글';
+const SPIRIT=[['백성들이 자신의 생각을 표현할 수 있는 문자가 없는 것을 안타깝게 여겼다.','애민 정신'],['글자를 몰라 억울한 일을 당하는 백성을 가엾게 여겼다.','애민 정신'],['우리말은 중국어와 달라 한자로는 우리의 말소리를 잘 적을 수 없었다.','자주정신'],['우리말에 맞는 우리 고유의 문자가 필요하다고 생각했다.','자주정신'],['누구나 쉽게 배워서 일상에서 편하게 쓸 수 있는 문자를 만들고자 했다.','실용 정신'],['날마다 편하게 쓸 수 있도록 익히기 쉬운 글자를 만들었다.','실용 정신']];
+const SPN=['자주정신','애민 정신','실용 정신'];
+G(KS,KT2,LV4,lv=>{const [s,t]=R.pick(SPIRIT);return mcFixed(`k2-sp-${s}`,`다음 내용에 드러난 훈민정음의 창제 정신은?${box(s)}`,SPN,SPN.indexOf(t));},1.2);
+G(KS,KT2,['중','상'],lv=>{const sel=R.shuffle(SPN).map(n=>R.pick(SPIRIT.filter(x=>x[1]===n)));const perms=[];const P=(a,r)=>{if(!a.length){perms.push(r);return;}a.forEach((x,i)=>P(a.filter((_,j)=>j!==i),[...r,x]));};P(SPN,[]);
+  const key=p=>`㉠ ${p[0]}　㉡ ${p[1]}　㉢ ${p[2]}`;const ck=key(sel.map(x=>x[1]));const ch=[ck,...R.sample(perms.map(key).filter(k=>k!==ck),ncE(lv)-1)].sort();
+  return mcFixed(`k2-sp3-${sel.map(x=>x[0]).join('|')}`,`㉠~㉢에 드러난 훈민정음의 창제 정신을 바르게 짝 지은 것은?${box(sel.map((x,i)=>`${['㉠','㉡','㉢'][i]} ${x[0]}`).join('<br>'))}`,ch,ch.indexOf(ck));});
+const SHAPE=[['ㄱ','혀뿌리가 목구멍을 막는 모양'],['ㄴ','혀끝이 윗잇몸에 닿는 모양'],['ㅁ','입의 모양'],['ㅅ','이의 모양'],['ㅇ','목구멍의 모양'],['ㆍ','하늘의 둥근 모양'],['ㅡ','땅의 평평한 모양'],['ㅣ','사람이 서 있는 모양']];
+G(KS,KT2,LV4,lv=>{const [g,d]=R.pick(SHAPE);if(Math.random()<0.5)return mc(`k2-sh1-${g}`,`기본자 ‘${g}’를 만든 원리로 알맞은 것은?`,`${d}을 본떴다.`,SHAPE.filter(x=>x[0]!==g).map(x=>`${x[1]}을 본떴다.`),ncE(lv));
+  return mc(`k2-sh2-${g}`,`다음 설명에 해당하는 기본자는?${box(`${d}을 본떠 만들었다.`)}`,g,SHAPE.filter(x=>x[0]!==g).map(x=>x[0]),ncE(lv));});
+const GAH={'ㄱ':['ㅋ'],'ㄴ':['ㄷ','ㅌ'],'ㅁ':['ㅂ','ㅍ'],'ㅅ':['ㅈ','ㅊ'],'ㅇ':['ㆆ','ㅎ']};
+G(KS,KT2,['하','중','상'],lv=>{const b=R.pick(Object.keys(GAH));const c=GAH[b].join(', ');const ds=Object.keys(GAH).filter(k=>k!==b).map(k=>GAH[k].join(', '));ds.push(b+', '+GAH[b][0],'ㄹ, ㅿ','ㄲ, ㄸ');
+  return mc(`k2-ga1-${b}`,`기본자 ‘${b}’에 소리가 세짐에 따라 획을 더해 만든 글자로만 묶인 것은?`,c,ds,ncE(lv),'가획의 원리');});
+G(KS,KT2,['중','상'],lv=>{const ok=[];for(const k in GAH)for(const g of GAH[k])ok.push(`${k} → ${g}`);const bad=[];for(const k in GAH)for(const k2 in GAH)if(k!==k2)bad.push(`${k} → ${GAH[k2][0]}`);const w=R.pick(bad);
+  return mc(`k2-ga2-${w}`,'기본자와 그 기본자에 획을 더해 만든 글자의 관계가 <u>바르지 않은</u> 것은?',w,ok,ncE(lv));});
+const PRIN={'상형의 원리(기본자)':'ㄱㄴㅁㅅㅇㆍㅡㅣ','가획의 원리':'ㅋㄷㅌㅂㅍㅈㅊㆆㅎ','이체자':'ㆁㄹㅿ','합성의 원리':'ㅗㅜㅏㅓㅛㅠㅑㅕ','같은 자음자를 가로로 나란히 붙여 씀':'ㄲㄸㅃㅆㅉ','모음자와 모음자를 합하여 씀':'ㅘㅝㅐㅒㅖㅢ'};
+const PK=Object.keys(PRIN);
+G(KS,KT2,['하','중','상'],lv=>{const p=R.pick(PK),g=R.pick([...PRIN[p]]);if(Math.random()<0.5)return mc(`k2-pr1-${g}`,`‘${g}’를 만든 방식으로 알맞은 것은?`,p,PK,ncE(lv));
+  return mc(`k2-pr2-${p}-${g}`,`다음 중 <b>${p}</b>(으)로 만든 글자는?`,g,PK.filter(k=>k!==p).map(k=>R.pick([...PRIN[k]])),ncE(lv));},1.3);
+G(KS,KT2,LV4,lv=>{const g=R.pick(['ㆆ','ㅿ','ㆁ','ㆍ']);return mc(`k2-lost-${g}`,'훈민정음 창제 당시의 28자 가운데 오늘날 쓰이지 <u>않는</u> 글자는?',g,['ㅎ','ㅅ','ㅇ','ㅡ','ㄹ','ㅣ','ㅋ'],ncE(lv),'오늘날 쓰지 않는 글자: ㆆ(여린히읗), ㅿ(반치음), ㆁ(옛이응), ㆍ(아래아)');});
+G(KS,KT2,['중','상'],lv=>{const b=R.pick(['ㄴ','ㅁ','ㅅ','ㅇ']);const [g1,g2]=GAH[b];return sa(`k2-gaw-${b}`,`<b>[서술형]</b> ‘${b} → ${g1} → ${g2}’에 적용된 훈민정음의 창제 원리를 쓰고, 그 원리를 &lt;조건&gt;에 맞게 설명하시오.${box('&lt;조건&gt; ① 원리의 이름을 쓸 것. ② ‘기본자’, ‘소리’, ‘획’이라는 말을 넣어 한 문장으로 쓸 것.')}`,`가획의 원리: 자음 기본자 ‘${b}’에 소리가 세짐에 따라 획을 한 번이나 두 번 더하여 ‘${g1}’, ‘${g2}’를 만들었다.`,'채점: 원리 이름, 기본자·소리가 세짐·획을 더함이 모두 들어갔는가');},0.8);
+const K2_HG=[['자음 기본자는 발음 기관의 모양을 본떠 만들었다.',1,'기초'],['모음 기본자는 하늘, 땅, 사람의 모양을 본떠 만들었다.',1,'기초'],['가획자는 소리가 세짐에 따라 기본자에 획을 더해 만들었다.',1,'하'],['이체자 ‘ㆁ, ㄹ, ㅿ’은 획을 더했지만 소리가 세짐을 나타내지 않는다.',1,'중'],['‘ㅗ, ㅏ’는 모음 기본자를 한 번 결합하여 만든 글자이다.',1,'중'],['‘ㅛ, ㅑ’는 모음 기본자를 두 번 결합하여 만든 글자이다.',1,'중'],['훈민정음 창제 당시 글자는 자음자 17자와 모음자 11자, 모두 28자였다.',1,'하'],['오늘날에는 한글로 표기하는 데 24자를 사용한다.',1,'하'],['한글은 소리 나는 위치가 같은 글자끼리 모양이 비슷하다.',1,'하'],['한글은 원칙적으로 한 글자가 한 가지 소리를 나타낸다.',1,'하'],['한글은 자음자와 모음자를 모아쓰기 한다.',1,'기초'],['말소리가 변하면 그것을 적는 문자도 변화를 겪는다.',1,'중'],['훈민정음은 ‘백성을 가르치는 바른 소리’라는 뜻이다.',1,'기초'],['한글날은 훈민정음 반포를 기념하는 날로 10월 9일이다.',1,'기초'],['한글은 적은 수의 자음자와 모음자로 다양한 말소리를 적을 수 있다.',1,'중'],
+['‘ㄹ’은 가획의 원리로 만든 가획자이다.',0,'중','‘ㄹ’은 이체자이다.'],['자음 기본자는 하늘, 땅, 사람의 모양을 본떠 만들었다.',0,'기초','자음 기본자는 발음 기관의 모양을 본떠 만들었다.'],['‘ㅋ’은 ‘ㄴ’에 획을 더해 만들었다.',0,'하','‘ㅋ’은 ‘ㄱ’에 획을 더해 만들었다.'],['훈민정음 창제 당시 만든 28자는 오늘날에도 모두 쓰인다.',0,'하','ㆆ, ㅿ, ㆁ, ㆍ는 오늘날 쓰이지 않는다.'],['‘ㄲ, ㄸ’은 기본자에 획을 더한 가획자이다.',0,'중','‘ㄲ, ㄸ’은 같은 자음자를 가로로 나란히 붙여 쓴 것이다.'],['한글은 영어 알파벳처럼 한 글자가 단어에 따라 여러 소리로 발음된다.',0,'하','한글은 원칙적으로 한 글자가 한 가지 소리를 나타낸다.'],['‘ㆍ’는 땅의 평평한 모양을 본떴다.',0,'중','‘ㆍ’는 하늘의 둥근 모양을 본떴다.'],['한글은 자음자와 모음자를 풀어쓰기 하는 것이 원칙이다.',0,'하','한글은 모아쓰기를 한다.'],['훈민정음은 양반만 쓸 수 있도록 만든 문자이다.',0,'기초','훈민정음은 누구나 쉽게 배워 쓸 수 있도록 만든 문자이다.'],['가획자는 획을 더할수록 소리가 약해진다.',0,'중','가획자는 획을 더할수록 소리가 세진다.']].map(a=>({s:a[0],o:a[1],lv:a[2],tp:KT2,fix:a[3]||''}));
+
+/* --- 듣기·말하기 성찰 --- */
+const KT3='듣기·말하기 성찰';
+const K2_LS=[['듣기·말하기 전에는 담화 상황과 목적, 청중을 점검한다.',1,'기초'],['말할 내용을 미리 준비하고 예상 질문에 대한 답변을 마련한다.',1,'기초'],['듣기·말하기를 하는 중에도 자신의 말하기 속도나 시선을 점검하고 조정한다.',1,'하'],['상대방의 질문을 잘 이해하지 못했을 때에는 경청하며 메모하면서 듣는다.',1,'하'],['듣기·말하기를 마친 뒤에는 잘한 점과 개선할 점을 성찰한다.',1,'기초'],['성찰한 내용을 바탕으로 다음 듣기·말하기를 위한 개선 계획을 세운다.',1,'하'],['말하기 불안은 누구에게나 나타날 수 있는 자연스러운 현상이다.',1,'하'],['말할 내용을 충실히 준비하고 미리 연습하면 말하기 불안을 줄일 수 있다.',1,'기초'],['‘나는 잘할 수 있다.’와 같은 긍정적인 자기 암시는 말하기 불안을 줄이는 데 도움이 된다.',1,'하'],['거울이나 카메라를 활용해 목소리, 시선, 자세를 점검하며 연습할 수 있다.',1,'중'],['녹화한 영상을 다시 보며 자신의 듣기·말하기 과정을 되돌아볼 수 있다.',1,'중'],
+['말하기 불안은 일부 사람에게만 나타나는 특별한 현상이다.',0,'하','말하기 불안은 누구에게나 나타날 수 있다.'],['듣기·말하기 과정의 점검은 말하기가 모두 끝난 뒤에만 한다.',0,'중','듣기·말하기 전, 중, 후에 모두 점검하고 조정한다.'],['말하기 불안을 줄이려면 내용을 준비하지 않고 즉흥적으로 말하는 것이 좋다.',0,'기초','말할 내용을 충실히 준비하고 연습해야 한다.'],['긴장될 때에는 청중을 보지 않고 원고만 빠르게 읽는 것이 좋다.',0,'하','고개를 들어 청중을 보며 말의 속도를 조절한다.'],['상대방의 질문을 이해하지 못해도 준비한 답변을 그대로 말한다.',0,'중','질문을 경청하고 의도를 파악한 뒤 답한다.'],['성찰할 때에는 잘한 점만 떠올리고 아쉬운 점은 생각하지 않는다.',0,'하','잘한 점과 개선할 점을 함께 성찰한다.'],['청중이 나를 부정적으로 평가할 것이라고 미리 생각해 두면 불안이 줄어든다.',0,'상','부정적인 평가에 대한 지나친 걱정은 말하기 불안의 원인이다.']].map(a=>({s:a[0],o:a[1],lv:a[2],tp:KT3,fix:a[3]||''}));
+const ANX_C=['공식적인 말하기 상황에 익숙하지 않다.','말할 내용을 제대로 준비하지 않았다.','낯선 청중이 자신을 부정적으로 평가할까 봐 지나치게 걱정한다.'];
+const ANX_S=['미리 원고를 작성하는 등 말할 내용을 충실히 준비한다.','청중이 앞에 있다고 가정하고 미리 말하기 연습을 한다.','지나친 걱정이나 부정적인 생각을 떨치고 긍정적으로 생각하려고 노력한다.','‘실수해도 괜찮다.’라고 긍정적인 자기 암시를 한다.','성공적으로 말하는 장면을 머릿속에 그려 본다.'];
+G(KS,KT3,LV4,lv=>{const cause=Math.random()<0.5;const c=R.pick(cause?ANX_C:ANX_S);return mc(`k2-anx-${c}`,`다음 중 말하기 불안의 <b>${cause?'원인':'대처 방법'}</b>에 해당하는 것은?`,c,cause?ANX_S:ANX_C,Math.min(ncE(lv),cause?5:4));});
+const ADJ_P=[['긴장해서 원고만 보게 되고 말이 점점 빨라진다.','고개를 들어 청중과 시선을 맞추고 말의 속도를 천천히 조절한다.'],['말하기에 신경 쓰다 보니 상대방의 질문을 제대로 이해하지 못했다.','상대방의 말을 경청하고 집중하며, 메모하면서 듣는다.'],['목소리가 작아 뒤쪽에 앉은 청중이 잘 듣지 못한다.','목소리를 크게 하고 또박또박 발음한다.'],['청중이 지루해하는 표정을 짓는다.','예시나 자료를 활용해 청중의 흥미를 끈다.'],['준비한 내용이 갑자기 생각나지 않는다.','원고나 메모의 핵심어를 보며 말할 내용을 떠올린다.'],['미리 예상했던 질문을 받았다.','준비한 자료를 살펴보며 자신 있게 대답한다.']];
+G(KS,KT3,LV4,lv=>{const [p,a]=R.pick(ADJ_P);return mc(`k2-adj-${p}`,`듣기·말하기 중에 다음과 같은 점을 점검했을 때 조정 방법으로 가장 알맞은 것은?${box(p)}`,a,ADJ_P.filter(x=>x[1]!==a).map(x=>x[1]),ncE(lv));},1.3);
+const STAGE=[['담화 상황과 목적, 청중을 점검한다.','듣기·말하기 전'],['발표 원고와 예상 질문에 대한 답변을 준비한다.','듣기·말하기 전'],['말하기 불안의 대처 방법을 찾아 메모해 둔다.','듣기·말하기 전'],['말하는 도중 자신의 시선과 말하기 속도를 점검한다.','듣기·말하기 중'],['상대방의 말을 메모하며 경청한다.','듣기·말하기 중'],['청중의 반응을 살피며 말하는 방식을 조정한다.','듣기·말하기 중'],['녹화한 영상을 다시 보며 잘한 점과 아쉬운 점을 찾는다.','듣기·말하기 후'],['성찰 일지를 쓰고 다음을 위한 개선 계획을 세운다.','듣기·말하기 후']];
+G(KS,KT3,LV4,lv=>{const [s,t]=R.pick(STAGE);const ch=['듣기·말하기 전','듣기·말하기 중','듣기·말하기 후'];return mcFixed(`k2-stg-${s}`,`다음 활동은 듣기·말하기의 어느 단계에서 하는 일인가?${box(s)}`,ch,ch.indexOf(t));});
+G(KS,KT3,['하','중','상'],lv=>{const [p,a]=R.pick(ADJ_P.slice(0,5));return sa(`k2-adjw-${p}`,`<b>[서술형]</b> 다음은 발표 중에 학생이 스스로 점검한 내용이다. 이를 바탕으로 조정 방법을 한 문장으로 쓰시오.${box(p)}`,a,'채점: 점검한 문제를 해결하는 구체적인 행동을 썼는가');},0.8);
+
+/* --- 복합양식 읽기 --- */
+const KT4='복합양식 읽기';
+const SIGN=[['그래프','구체적인 수치의 변화나 차이를 한눈에 비교할 수 있게 한다.'],['표','여러 정보를 항목별로 체계적으로 정리하여 쉽게 비교할 수 있게 한다.'],['사진','실제 모습이나 사례를 생생하게 보여 준다.'],['그림','상황이나 개념을 시각적으로 표현하여 쉽게 이해하게 한다.'],['동영상','움직임이나 진행 과정을 생동감 있게 보여 준다.'],['소리','말이나 음향으로 정보를 직접 들려준다.']];
+G(KS,KT4,LV4,lv=>{const [s,r]=R.pick(SIGN);if(Math.random()<0.5)return mc(`k2-sg1-${s}`,`복합양식 자료에 쓰인 <b>${s}</b>의 역할로 가장 알맞은 것은?`,r,SIGN.filter(x=>x[0]!==s).map(x=>x[1]),ncE(lv));
+  return mc(`k2-sg2-${s}`,`다음 역할을 하기에 가장 알맞은 기호는?${box(r)}`,s,SIGN.filter(x=>x[0]!==s).map(x=>x[0]),ncE(lv));},1.2);
+const CRIT=['내용의 타당성','내용의 신뢰성','표현 방법의 적절성'];
+const EVAL=[['‘운동은 건강에 좋다.’는 주장을 뒷받침하려고 운동선수의 연봉 그래프를 제시했다.',0],['유기 동물이 늘고 있다는 내용을 연도별 유기 동물 수 자료로 뒷받침했다.',0],['급식 만족도를 높이자는 주장에 학교 건물 사진만 실었다.',0],['노로바이러스를 예방하려면 음식물을 익혀 먹어야 한다는 내용을 가열하면 바이러스가 사라진다는 과학적 사실로 뒷받침했다.',0],
+['출처를 밝히지 않은 개인 블로그의 통계를 인용했다.',1],['식품의약품안전처의 집계 결과를 출처와 함께 제시했다.',1],['누가 언제 조사했는지 알 수 없는 설문 결과를 제시했다.',1],['질병관리청 관계자의 인터뷰를 인용했다.',1],['농림축산식품부가 발표한 조사 결과를 인용하고 조사 연도를 밝혔다.',1],
+['다섯 나라의 반려동물 정책을 비교하는 내용을 긴 문장으로만 나열했다.',2],['월별 감염 건수를 그래프로 나타내 한눈에 비교할 수 있게 했다.',2],['눈에 보이지 않는 바이러스를 그림으로 시각화했다.',2],['작은 글씨의 자막이 너무 빨리 지나가서 내용을 읽기 어렵다.',2],['동물을 쉽게 사고파는 문화를 자판기 그림으로 표현했다.',2]];
+G(KS,KT4,LV4,lv=>{const [s,c]=R.pick(EVAL);return mcFixed(`k2-ev-${s}`,`다음은 복합양식 자료를 평가한 내용이다. 주로 어떤 기준에 따라 평가한 것인가?${box(s)}`,CRIT,c);},1.5);
+const K2_MR=[['복합양식은 문자, 사진, 그림, 그래프, 표, 소리, 동영상 등 다양한 기호가 함께 어우러진 양식이다.',1,'기초'],['단일양식은 문자 언어로만 이루어진 양식이다.',1,'기초'],['복합양식 자료는 다양한 기호로 내용을 구체적으로 뒷받침하거나 시각화하여 이해를 돕는다.',1,'하'],['복합양식 자료를 읽을 때에는 자료가 작성된 맥락을 파악하며 비판적으로 평가해야 한다.',1,'중'],['자료의 출처가 분명한지 확인하는 것은 내용의 신뢰성을 평가하는 방법이다.',1,'하'],['자료가 글의 내용을 뒷받침하는지 판단하는 것은 내용의 타당성을 평가하는 방법이다.',1,'하'],['사용된 기호가 내용을 효과적으로 표현하는지 살피는 것은 표현 방법의 적절성을 평가하는 방법이다.',1,'하'],['권위 있는 기관의 조사나 전문가의 인터뷰를 인용하면 내용의 신뢰성을 높일 수 있다.',1,'중'],['노로바이러스는 영하 20도에서도 살아남을 정도로 추위에 강하다.',1,'상'],['노로바이러스에 오염된 음식물은 맛이나 냄새가 변하지 않는다.',1,'상'],['노로바이러스는 섭씨 80도에서 약 5분, 섭씨 100도에서 약 1분 가열하면 사라진다.',1,'상'],['〈반려동물은 가족이자 친구〉에 따르면 우리나라 사람 네 명 중 한 명은 반려동물을 기르고 있다.',1,'상'],['〈반려동물은 가족이자 친구〉에서는 유기 동물 문제의 바탕에 동물을 쉽게 사고파는 문화가 있다고 보았다.',1,'상'],
+['문자 언어로만 이루어진 글도 분량이 길면 복합양식이다.',0,'기초','문자 언어로만 이루어진 글은 단일양식이다.'],['복합양식 자료에 쓰인 그래프나 사진은 항상 믿을 수 있다.',0,'하','출처와 내용을 확인하며 비판적으로 읽어야 한다.'],['기호를 많이 쓸수록 표현 방법이 적절하다.',0,'중','기호가 내용을 효과적으로 표현하는지가 중요하다.'],['출처가 분명한지 확인하는 것은 표현 방법의 적절성을 평가하는 방법이다.',0,'중','출처 확인은 내용의 신뢰성을 평가하는 방법이다.'],['복합양식 자료를 읽을 때에는 내용은 평가하지 않고 기호의 종류만 확인하면 된다.',0,'하','내용의 타당성과 신뢰성, 표현 방법의 적절성을 모두 평가한다.'],['자료의 출처가 밝혀져 있지 않아도 그래프로 나타내면 신뢰할 수 있다.',0,'중','출처가 분명해야 신뢰할 수 있다.'],['노로바이러스는 추위에 약해서 겨울에는 거의 발생하지 않는다.',0,'상','노로바이러스는 12월부터 늘어 3월까지 많이 발생한다.'],['노로바이러스는 섭씨 80도에서 1분만 가열하면 사라진다.',0,'상','섭씨 80도에서는 약 5분 가열해야 한다.'],['〈반려동물은 가족이자 친구〉에 따르면 현재 가장 많이 기르는 반려동물은 고양이이다.',0,'상','가장 많이 기르는 반려동물은 개이다.']].map(a=>({s:a[0],o:a[1],lv:a[2],tp:KT4,fix:a[3]||''}));
+const NEED=[['다섯 나라의 반려동물 관련 정책을 비교하는 내용','표','항목별로 정리하면 나라별 정책을 쉽게 비교할 수 있기 때문이다.'],['노로바이러스의 월별 발생 건수 변화','그래프','수치의 변화를 한눈에 비교할 수 있기 때문이다.'],['반려동물 등록증의 실제 모습','사진','실제 모습을 생생하게 보여 줄 수 있기 때문이다.'],['윷을 던지고 말을 옮기는 놀이 과정','동영상','움직임과 진행 과정을 생동감 있게 보여 줄 수 있기 때문이다.'],['손을 씻는 올바른 순서','그림','순서와 동작을 시각적으로 보여 주어 쉽게 이해할 수 있기 때문이다.']];
+G(KS,KT4,['하','중','상'],lv=>{const [c,s,why]=R.pick(NEED);return sa(`k2-need-${c}`,`<b>[서술형]</b> 다음 내용을 복합양식으로 전달하려고 한다. 가장 알맞은 기호를 한 가지 쓰고, 그 까닭을 한 문장으로 쓰시오.${box(c)}`,`${s} — ${why}`,'채점: 내용의 특성에 맞는 기호와 그 기호의 역할을 까닭으로 썼는가(다른 기호도 까닭이 타당하면 인정)');},0.8);
+
+/* --- 복합양식 글쓰기 --- */
+const KT5='복합양식 글쓰기';
+const WSTEP=[['글의 주제와 목적을 정한다.','계획하기'],['글의 유형과 글을 실을 매체를 정한다.','계획하기'],['복합양식 자료의 특성을 고려하며 자료를 살펴본다.','내용 생성하기'],['내용이 믿을 만하고 출처가 명확한 자료를 수집한다.','내용 생성하기'],['수집한 자료가 어떤 기호로 이루어졌는지 파악한다.','내용 생성하기'],['글의 유형에 적합한 구성에 따라 내용을 체계적으로 조직한다.','내용 조직하기'],['글의 흐름이 자연스럽도록 내용의 순서를 조정한다.','내용 조직하기'],['추가하거나 삭제할 내용이 있는지 검토한다.','내용 조직하기'],['적절한 기호를 활용하여 필요한 정보를 전달한다.','표현하기']];
+const WSN=['계획하기','내용 생성하기','내용 조직하기','표현하기'];
+G(KS,KT5,LV4,lv=>{const [s,t]=R.pick(WSTEP);return mcFixed(`k2-ws-${s}`,`복합양식 자료를 활용하여 글을 쓸 때, 다음은 어느 과정에서 하는 일인가?${box(s)}`,WSN,WSN.indexOf(t));},1.4);
+const ARTC=[['표제','기사문의 내용을 압축적으로 표현한다.'],['부제','표제를 보충하며 읽는 이의 흥미를 끈다.'],['전문','기사문의 내용을 요약하여 제시한다.'],['본문','구체적인 내용을 자세히 전달한다.']];
+G(KS,KT5,['하','중','상'],lv=>{const [a,d]=R.pick(ARTC);if(Math.random()<0.5)return mcFixed(`k2-art1-${a}`,`기사문의 구성 요소 가운데 다음 설명에 해당하는 것은?${box(d)}`,ARTC.map(x=>x[0]),ARTC.findIndex(x=>x[0]===a));
+  return mc(`k2-art2-${a}`,`기사문의 <b>${a}</b>에 대한 설명으로 알맞은 것은?`,d,ARTC.filter(x=>x[0]!==a).map(x=>x[1]),4);});
+const TRV=[['첫째 날에는 첨성대와 동궁과 월지를 둘러보았다.','여정'],['다음 날 아침 일찍 버스를 타고 석굴암으로 이동했다.','여정'],['해설사께서 석굴암은 돌을 다듬어 쌓아 만든 인공 석굴이라고 설명해 주셨다.','견문'],['박물관에는 금관과 토기 등 신라의 유물이 전시되어 있었다.','견문'],['천 년 전 사람들의 솜씨에 감탄이 절로 나왔다.','감상'],['우리 문화유산을 소중히 지켜야겠다는 생각이 들었다.','감상']];
+G(KS,KT5,LV4,lv=>{const [s,t]=R.pick(TRV);const ch=['여정','견문','감상'];return mcFixed(`k2-trv-${s}`,`다음은 기행문의 일부이다. 기행문의 요소 가운데 무엇에 해당하는가?${box(s)}`,ch,ch.indexOf(t),'여정: 여행한 곳과 과정 / 견문: 보고 들은 것 / 감상: 느끼거나 생각한 것');});
+const GTYPE=[['기사문','표제 – 부제 – 전문 – 본문'],['논설문','서론 – 본론 – 결론'],['설명문','처음 – 중간 – 끝'],['기행문','여정, 견문, 감상']];
+G(KS,KT5,['하','중','상'],lv=>{const [g,c]=R.pick(GTYPE);return mc(`k2-gt-${g}`,`글의 유형과 그 구성(요소)을 바르게 짝 지은 것은?`,`${g}: ${c}`,GTYPE.filter(x=>x[0]!==g).map(x=>`${g}: ${x[1]}`),4);});
+const YUT=[['카드 뉴스','윷놀이의 규칙과 진행 방법'],['방송 영상','윷놀이에 담긴 수학적 원리'],['인터넷 백과사전','윷놀이 도구의 의미'],['인터넷 블로그','윷놀이가 국가 무형유산으로 지정된 까닭']];
+G(KS,KT5,['중','상'],lv=>{const [s,c]=R.pick(YUT);return mc(`k2-yut-${s}`,`세훈이가 ‘윷놀이의 방법과 가치’를 소개하는 기사문을 쓰려고 수집한 자료 가운데, <b>${s}</b>를 활용해 생성한 내용은?`,c,YUT.filter(x=>x[0]!==s).map(x=>x[1]),4);});
+G(KS,KT5,['중','상'],lv=>sa('k2-yutw',`<b>[서술형]</b> 세훈이는 기사문 마지막에 윷놀이의 계승과 발전을 위해 노력할 것을 당부하는 내용과 ‘사람들이 윷놀이를 즐기는 사진’을 추가하려고 한다. 그 까닭을 기사문의 주제와 관련지어 한 문장으로 쓰시오.`,'사람들이 윷놀이를 즐기는 사진과 당부하는 내용을 더해 윷놀이가 계승·발전시켜야 할 가치 있는 전통 놀이라는 주제를 강조하기 위해서이다.','채점: ‘주제 강조’가 드러났는가'),0.5);
+
+/* 진위 문항(O/X, 옳은 것·옳지 않은 것, &lt;보기&gt; 고르기) */
+oxGens(KS,[...K2_PH,...K2_HG,...K2_LS,...K2_MR],x=>x.tp,'k2');
+for(const [tp,data] of [[KT1,K2_PH],[KT2,K2_HG],[KT3,K2_LS],[KT4,K2_MR]]){
+  G(KS,tp,['중','상'],lv=>{const k=lv==='상'?4:3;const pool=upTo(data,lv);const st=R.sample(pool,k);if(st.length<k||!st.some(s=>s.o))return null;
+    return bogiMC(`k2-bg-${st.map(s=>s.s).join('|')}`,'&lt;보기&gt;에서 옳은 것만을 있는 대로 고른 것은?',st.map(s=>({s:s.s,ok:!!s.o})),ncE(lv),st.filter(s=>!s.o&&s.fix).map(s=>s.fix).join(' / '));},1.2);
+}
+const EXAM_TOPICS={'국어':[KT1,KT2,KT3,KT4,KT5]};
+const EXAM_LABEL={'국어':'2-2 2차 시험 범위 (천재(노) p.118~201)'};
+Object.assign(KW['국어'],{[KT1]:'음운|모음|자음|발음|단모음|이중 모음|시험',[KT2]:'훈민정음|한글|창제|가획|상형|문자|시험',[KT3]:'듣기|말하기|발표|토론|말하기 불안|성찰|시험',[KT4]:'복합양식|매체|타당성|신뢰성|그래프|비판|시험',[KT5]:'글쓰기|쓰기|기사문|기행문|작문|시험'});
+const ENX={"L7": {"words": [{"w": "actually", "k": "실제로, 정말로; 사실은", "d": "used to show that something is true, especially when it is not what you expected", "e": "The food looks bad, but it is actually tasty.", "ek": "그 음식은 보기에 별로지만, 사실 맛있다."}, {"w": "ancient", "k": "고대의", "d": "belonging to the very distant past and no longer in existence", "e": "The ancient pyramids in Egypt are very famous.", "ek": "이집트의 고대 피라미드는 매우 유명하다."}, {"w": "bean", "k": "콩", "d": "a seed you can eat, usually shaped like a kidney, that grows in long pods on bean plants", "e": "Beans can make your heart healthy.", "ek": "콩은 네 심장을 건강하게 만들 수 있다."}, {"w": "behind", "k": "(위치) ~ 뒤에; ~ 배후에, 숨겨져 있는", "d": "at the back of (somebody or something), or often hidden by it or them", "e": "The reason behind his success is hard work.", "ek": "그의 성공 뒤의 숨겨진 이유는 그의 노력이다."}, {"w": "break", "k": "부러지다, 부수다", "d": "to be damaged and separated into two or more parts suddenly and with force", "e": "He broke his arm during a baseball game.", "ek": "그는 야구 경기 중에 팔이 부러졌다."}, {"w": "cancel", "k": "취소하다", "d": "to decide that something (such as a game, performance, etc.) will not happen", "e": "They canceled the concert because the singer was sick.", "ek": "그들은 가수가 아파서 콘서트를 취소했다."}, {"w": "catchy", "k": "기억하기 쉬운", "d": "appealing and easy to remember", "e": "Popular songs often have catchy melodies.", "ek": "인기 있는 노래들은 종종 기억하기 쉬운 멜로디들을 가지고 있다."}, {"w": "complete", "k": "완료하다, 완성하다", "d": "to finish making or doing (something)", "e": "She completed the puzzle in just 10 minutes.", "ek": "그녀는 단 10분 만에 퍼즐을 끝냈다."}, {"w": "disappointed", "k": "실망한, 낙담한", "d": "feeling sad because something didn't turn out as you hoped", "e": "He was disappointed that the soccer game was canceled.", "ek": "그는 축구 경기가 취소되어 실망했다."}, {"w": "earworm", "k": "자꾸 귓전에 맴도는 곡조", "d": "a song or melody that keeps repeating in one's mind", "e": "This new pop song is a real earworm.", "ek": "이 새로운 팝송은 귓가에 계속 맴돈다."}, {"w": "example", "k": "예, 보기", "d": "a person or thing used to explain your point or to show that a general statement is true", "e": "An apple is a great example of a healthy snack.", "ek": "사과는 건강한 간식의 좋은 예이다."}, {"w": "expression", "k": "표현", "d": "a word or phrase", "e": "The teacher taught us many helpful expressions.", "ek": "선생님은 우리에게 도움이 되는 많은 표현들을 가르쳐 주었다."}, {"w": "go away", "k": "없어지다, (떠나)가다", "d": "to stop existing or happening", "e": "I'm sure my worries will go away soon.", "ek": "나는 내 걱정들이 곧 없어질 거라고 확신한다."}, {"w": "idiom", "k": "숙어, 관용구", "d": "a phrase whose meaning isn't clear from the individual words, because it has its own special meaning", "e": "She learns new idioms to improve her English.", "ek": "그녀는 영어 실력을 향상시키기 위해 새로운 숙어를 배운다."}, {"w": "later", "k": "나중에, 이후에", "d": "coming or happening after a certain time or at a future time", "e": "I will send you a text message later.", "ek": "내가 나중에 너에게 문자 메시지를 보낼게."}, {"w": "latest", "k": "최신의, 최근의", "d": "most recent", "e": "She showed me the latest version of the app.", "ek": "그녀는 나에게 그 앱의 최신 버전을 보여주었다."}, {"w": "offer", "k": "제의, 제안; 제안하다", "d": "the act of offering something", "e": "He got an offer to work at a new company.", "ek": "그는 새로운 회사에서 일하라는 제안을 받았다."}, {"w": "over time", "k": "시간이 지나면서", "d": "gradually or during a period of time", "e": "Over time, the city became more popular.", "ek": "시간이 지나면서, 그 도시는 더 인기가 많아졌다."}, {"w": "phrase", "k": "어구, 구절", "d": "A phrase is a group of words that shows one idea but isn’t a full sentence", "e": "I learned a new English phrase today in class.", "ek": "나는 오늘 수업 시간에 새로운 영어 어구를 배웠다."}, {"w": "play", "k": "연극; 희곡; 놀이; 놀다", "d": "a story written to be acted out on stage, where actors tell the story with their words and actions", "e": "The play is based on a true story.", "ek": "그 연극은 실제 이야기를 바탕으로 한다."}, {"w": "politely", "k": "예의 바르게, 공손하게, 정중하게", "d": "in a kind and respectful way", "e": "Behave politely when you talk to adults.", "ek": "어른들에게 말할 때 예의 바르게 행동하세요."}, {"w": "prepare", "k": "준비하다", "d": "to make (someone or something) ready for some activity, purpose, use, etc.", "e": "Let's prepare some presents for Christmas.", "ek": "크리스마스를 위해 선물을 좀 준비하자."}, {"w": "public", "k": "공공의, 공중의, 대중의", "d": "provided, especially by the government, for the use of people in general", "e": "The public library offers free books to everyone.", "ek": "공공 도서관은 모두에게 무료 책을 제공한다."}, {"w": "refuse", "k": "(요청·부탁 등을) 거절하다; 거부하다", "d": "to say that you will not accept or do something", "e": "I refuse to watch scary movies.", "ek": "나는 무서운 영화를 보는 것을 거절한다."}, {"w": "reveal", "k": "드러내다, 폭로하다", "d": "to make (something) known", "e": "The book will reveal the secret at the end.", "ek": "그 책은 끝부분에서 그 비밀을 드러낼 것이다."}, {"w": "spill", "k": "쏟다, 흘리다", "d": "to accidentally make liquid fall out of a container", "e": "She spilled the drink on the floor.", "ek": "그녀는 바닥에 음료를 쏟았다."}, {"w": "success", "k": "성공", "d": "something that achieves positive results", "e": "Their performance became a huge success.", "ek": "그들의 공연은 큰 성공을 거두었다."}, {"w": "viewer", "k": "시청자", "d": "a person who sees or looks at something", "e": "Many viewers love this TV program.", "ek": "많은 시청자들이 이 TV 프로그램을 아주 좋아한다."}, {"w": "vote", "k": "투표하다; 투표", "d": "to cast or conduct a vote", "e": "We will vote for the class president tomorrow.", "ek": "우리는 내일 학급 반장을 뽑기 위해 투표할 것이다."}, {"w": "wish", "k": "~을 빌다, 바라다, 소원하다", "d": "to want something to happen or be true", "e": "I wish you good luck.", "ek": "나는 네 행운을 빌어."}, {"w": "wonder", "k": "경이, 경탄, 놀라움", "d": "something or someone that is very surprising, beautiful, amazing, etc.", "e": "There are many wonders in nature.", "ek": "자연에는 많은 경이로움이 있다."}], "en": ["It was the day of the school play.", "Lily practiced for the play for weeks.", "The curtains were about to go up, and she felt very nervous.", "Her friend smiled and said, “Break a leg!”", "Lily said, “Thanks. I will!”", "She got on the stage and performed successfully.", "Although “Break a leg!” may sound like a bad thing, it actually means “Good luck!”", "German actors who came to the United States in the early 20th century first used this phrase.", "By wishing each other bad luck, they believed that it would go away.", "This expression is still used today.", "“Break a leg” is a phrase that people say to wish performers good luck before a show.", "Tommy and Lisa were preparing a surprise party for Hana.", "But Tommy was not good at keeping secrets.", "So, Lisa told him, “Don’t spill the beans.”", "Tommy said, “Don’t worry. I promise not to tell Hana.”", "Tommy kept his promise and the surprise party was a big success.", "Hana was completely surprised.", "What does the phrase “spill the beans” mean?", "It means to reveal a secret.", "Where does this phrase come from?", "It comes from an ancient Greek way of voting.", "When Greeks voted, they put a white or black bean in a big jar.", "When the voting was completed, the beans were spilled to reveal the results.", "From then, people began to use this phrase with a new meaning.", "Sarah wanted to see a movie with her best friend, Emily.", "So, she asked Emily, “Do you want to see a movie with me today?”", "Emily replied, “I’m sorry, but I have to take a rain check. I have to go to my grandmother’s house today.”", "“That’s okay. Let’s do it another time,” said Sarah.", "Although Sarah was a little disappointed, she understood Emily’s situation.", "What does “take a rain check” mean?", "It means to refuse an offer politely but wish to do it later.", "The phrase “rain check” was first used at a baseball game in the 1880s.", "A rain check was a ticket that people got for a future game when a baseball game was canceled because of rain.", "Later, rain checks were given at other sporting events.", "Over time, “take a rain check” has been widely used to say that you can’t do something now and want to do it later."], "ko": ["학교 연극의 날이었다.", "Lily는 몇 주 동안 그 연극을 위해 연습했다.", "커튼이 막 올라가려는 참에, 그녀는 매우 긴장했다.", "그녀의 친구가 웃으며 말했다, “다리 부러져!”", "Lily는 “고마워. 그럴게!”라고 말했다.", "그녀는 무대에 올랐고 성공적으로 공연했다.", "비록 “다리 부러지세요!”가 나쁜 것처럼 들리겠지만, 그것은 사실 “행운을 빌어요!”를 의미한다.", "20세기 초에 미국에 온 독일 배우들이 이 어구를 처음 사용했다.", "서로에게 불운을 빎으로써, 그들은 불운이 없어질 거라고 믿었다.", "이 표현은 오늘날에도 여전히 사용된다.", "‘다리 부러지세요’는 사람들이 공연 전에 공연자들에게 행운을 빌기 위해 말하는 어구이다.", "Tommy와 Lisa는 하나를 위한 깜짝 파티를 준비하고 있었다.", "그러나 Tommy는 비밀을 지키는 것을 잘하지 못했다.", "그래서, Lisa는 그에게 “콩을 쏟지 마.”라고 말했다.", "Tommy는 “걱정 마. 하나에게 말하지 않겠다고 약속해.”라고 말했다.", "Tommy는 그의 약속을 지켰고 깜짝 파티는 크게 성공했다.", "하나는 완전히 깜짝 놀랐다.", "어구 ‘콩을 쏟다’가 무엇을 의미할까?", "그것은 비밀을 드러내는 것을 의미한다.", "이 어구는 어디에서 유래한 건가?", "이것은 고대 그리스의 투표 방법에서 유래한 것이다.", "그리스인들이 투표할 때, 그들은 흰색이나 검은색 콩을 큰 항아리에 넣었다.", "투표가 완료되었을 때, 그 콩들은 결과를 드러내기 위해 쏟아졌다.", "그때부터, 사람들은 이 어구를 새로운 의미로 사용하기 시작했다.", "Sarah는 그녀의 가장 친한 친구 Emily와 영화를 보러 가고 싶었다.", "그래서 그녀는 Emily에게 물었다, “오늘 나랑 영화를 보러 가고 싶니?”", "Emily는 대답했다, “미안하지만, 우천 교환권을 받아야만 해. 나는 오늘 할머니 댁에 가야 해.”", "“괜찮아. 다른 때에 하자”라고 Sarah가 말했다.", "비록 Sarah는 조금 실망했지만, 그녀는 Emily의 상황을 이해했다.", "‘우천 교환권을 받는다’가 무엇을 의미할까?", "그것은 제안을 정중하게 거절하지만 나중에 하고 싶어 한다는 것을 의미한다.", "어구 ‘우천 교환권’은 1880년대에 야구 경기에서 처음 사용되었다.", "우천 교환권은 비 때문에 야구 경기가 취소되었을 때 사람들이 미래의 경기를 위해 받는 표였다.", "이후에, 우천 교환권들은 다른 스포츠 행사들에서 주어졌다.", "시간이 흐르면서, ‘우천 교환권을 받는다’는 당신이 지금은 어떤 일을 할 수 없지만 나중에 그것을 하고 싶다고 말하기 위해 널"], "sec": ["A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C"]}, "L8": {"words": [{"w": "along", "k": "~을 따라", "d": "in a line matching the length or direction of (something)", "e": "They walked slowly along the street.", "ek": "그들은 거리를 따라 천천히 걸었다."}, {"w": "be made up of", "k": "~로 구성되다", "d": "to consist of or be composed of different parts or elements", "e": "A soccer team is made up of 11 players.", "ek": "한 축구팀은 11명의 선수로 구성되어 있다."}, {"w": "both", "k": "~도, 모두; 둘 다, 양쪽", "d": "used to emphasize not just one, but the other as well", "e": "Both the boy and the girl are smiling.", "ek": "그 남자아이와 여자아이 모두 웃고 있다."}, {"w": "carnival", "k": "카니발, 축제", "d": "an event where many people gather to celebrate something", "e": "We saw an amazing parade at the carnival.", "ek": "우리는 카니발에서 굉장한 퍼레이드를 봤다."}, {"w": "castle", "k": "성", "d": "a large, old building with tall, thick walls and towers built to defend against attacks", "e": "The tour guide told us the history of the castle.", "ek": "여행 가이드는 우리에게 그 성의 역사를 이야기해 주었다."}, {"w": "drink", "k": "음료, 마실 것", "d": "a liquid that you can drink; beverage", "e": "I would like to order a cold drink.", "ek": "나는 차가운 음료를 주문하고 싶다."}, {"w": "fantastic", "k": "환상적인, 굉장한, 멋진", "d": "extremely good", "e": "The view from the mountain is fantastic.", "ek": "산에서 보이는 경치가 환상적이다."}, {"w": "hold", "k": "열다, 개최하다", "d": "to organize or arrange an event, meeting, or activity for people to attend", "e": "Our school holds sports day every year.", "ek": "우리 학교는 매년 운동회를 개최한다."}, {"w": "icy", "k": "얼음의, 얼음으로 덮인", "d": "covered with or consisting of ice", "e": "Be careful when you drive on icy roads.", "ek": "얼어붙은 도로에서 운전할 때 주의해라."}, {"w": "look forward to", "k": "~을 기대하다", "d": "to expect (something) with pleasure", "e": "She is looking forward to the summer vacation.", "ek": "그녀는 여름 방학을 기대하고 있다."}, {"w": "make it", "k": "해내다, 성공하다", "d": "to reach a particular place, goal, etc.", "e": "She worked hard and finally made it.", "ek": "그녀는 열심히 노력해서 마침내 해냈다."}, {"w": "mascot", "k": "마스코트, 행운을 가져다 주는 것", "d": "a character or symbol representing a team, organization, or brand, often used for good luck", "e": "The blue bear is our team's mascot.", "ek": "파란 곰은 우리 팀의 마스코트이다."}, {"w": "miss", "k": "놓치다", "d": "to fail to use (something, such as an opportunity)", "e": "Don't miss the opportunity to see the concert!", "ek": "그 콘서트를 볼 기회를 놓치지 마!"}, {"w": "narrow", "k": "좁은", "d": "long and not wide, small from one side to the other side", "e": "When you cross a narrow bridge, you should be careful.", "ek": "좁은 다리를 건널 떄, 너는 조심해야 한다."}, {"w": "participate", "k": "참여하다, 참가하다", "d": "to be involved with others in doing something", "e": "They will participate in the drawing contest.", "ek": "그들은 그림 대회에 참가할 것이다."}, {"w": "performance", "k": "공연, 연주; 성과", "d": "an act, like singing or acting, done to entertain an audience", "e": "He gave a great performance in front of his friends.", "ek": "그는 친구들 앞에서 멋진 공연을 보여주었다."}, {"w": "pick", "k": "(과일 등을) 따다; 고르다, 선택하다", "d": "to remove a fruit, flower, etc. from a plant especially by using your hand", "e": "We picked some grapes from the tree.", "ek": "우리는 나무에서 포도를 좀 땄다."}, {"w": "place", "k": "놓다, 두다; 장소", "d": "to put something in a particular position", "e": "She placed the book on the desk.", "ek": "그녀는 책을 책상 위에 놓았다."}, {"w": "pour", "k": "붓다, 따르다", "d": "to make something flow from a container", "e": "He poured the milk into a cup.", "ek": "그는 우유를 컵에 부었다."}, {"w": "race", "k": "경주; 경주하다", "d": "a competition between people, animals, vehicles, etc., to see which one is fastest", "e": "He didn't win the race, but he did his best.", "ek": "그는 경주에서 이기지는 못했지만, 그는 최선을 다했다."}, {"w": "roast", "k": "굽다, 구워서 요리하다", "d": "to cook (food such as chicken, potatoes, or beef) with dry heat in an oven or over a fire", "e": "We will roast some potatoes with onions.", "ek": "우리는 감자를 양파와 함께 구울 것이다."}, {"w": "roll", "k": "굴리다", "d": "to move across the ground or another surface by turning over and over", "e": "The children rolled a big snowball.", "ek": "아이들이 큰 눈덩이를 굴렸다."}, {"w": "sculpture", "k": "조각, 조각품", "d": "a piece of art that is made by carving or molding clay, stone, metal, etc.", "e": "We saw a lion sculpture at the art gallery.", "ek": "우리는 미술관에서 사자 조각품을 보았다."}, {"w": "sled", "k": "썰매", "d": "a small vehicle for snow or ice that uses long pieces of wood or metal instead of wheels", "e": "She used a big sled to go down the hill quickly.", "ek": "그녀는 언덕을 언덕을 빠르게 내려가기 위해 큰 썰매를 사용했다."}, {"w": "slide", "k": "미끄러지다; 미끄럼틀", "d": "to move smoothly along a surface like ice or snow", "e": "The sled slides across the snow.", "ek": "썰매가 눈 위를 가로질러 미끄러져 간다."}, {"w": "stuck", "k": "갇힌, (~에 빠져) 움직일 수 없는", "d": "difficult or impossible to move from a position", "e": "He was stuck in the elevator for 30 minutes.", "ek": "그는 30분 동안 엘리베이터에 갇혔다."}, {"w": "taste", "k": "맛보다", "d": "to put a small amount of food or drink to find out its flavor", "e": "Let's taste this chocolate cake together!", "ek": "이 초콜릿 케이크를 함께 맛보자!"}, {"w": "through", "k": "~을 통해, ~을 지나서", "d": "from one side or end to another side or end of (something)", "e": "We walked through the park.", "ek": "우리는 공원을 지나 걸었다."}, {"w": "treat", "k": "간식", "d": "something that tastes good and that is not eaten often", "e": "I gave my dog a special treat after the walk.", "ek": "나는 산책 후에 나의 개에게 특별한 간식을 주었다."}, {"w": "unforgettable", "k": "잊지 못할, 잊을 수 없는", "d": "very special, unusual, beautiful, etc., and therefore difficult or impossible to forget", "e": "The trip was an unforgettable experience.", "ek": "그 여행은 잊지 못할 경험이었다."}], "en": ["Hello! Welcome to the Quebec Winter Carnival.", "I am Bonhomme, the mascot of the carnival.", "I am a big snowman.", "As you can see, I’m wearing a big red hat and a special belt.", "Do you want to take home an unforgettable memory from the carnival?", "Follow me, and I’ll show you what to do here.", "Bonhomme means “good man” in French.", "The Quebec Winter Carnival is usually held for 10 days between January and February in Quebec, Canada.", "This is my ice palace.", "Every year, a new ice palace is built for the carnival.", "So, I have a new home each year!", "Because the palace is made of ice and snow, it shines beautifully during the day.", "At night, it is even more beautiful with many lights.", "Take a look at my fantastic ice garden.", "You can see amazing ice sculptures of trees, flowers, and animals here.", "You can also enjoy exciting concerts and performances.", "Do you like to dance?", "I can teach you how to dance like me.", "There are also so many interesting activities you can do at the carnival.", "The toboggan slide was built in 1884 and is 200 meters long.", "A toboggan is a long narrow sled.", "If you like speed, get on the toboggan.", "It is so fast that you will feel like you are on a roller coaster.", "While you’re sliding down, you can enjoy amazing views of Quebec.", "You can see a huge famous castle on your left.", "On your right, you can see a beautiful icy river.", "If you see a large crowd along the river, it’s time to watch the Ice Canoe Race.", "This race is one of the best parts of the carnival, and you shouldn’t miss it.", "Canoe teams have to race through the icy river for about three kilometers.", "Teams are usually made up of five members, and both men and women can join the team.", "Look! One team is stuck in the ice and can’t move!", "The members have to push their canoe on the ice to get to the water.", "Phew! They are in the water again.", "I hope they can make it to the finish line.", "The race is so exciting that you will forget about the cold.", "After all these exciting activities, I’m really hungry.", "There are many delicious treats to eat at the carnival.", "How about a cup of hot chocolate?", "It’s always the perfect drink in cold weather.", "You also have to try maple taffy.", "It’s made in a special way here.", "Let’s learn how to make it.", "Pour hot maple syrup on the snow.", "Then place a stick on the syrup and quickly roll it around.", "Now, you have delicious maple taffy!", "I hope you come and see me at the carnival.", "Oh, don’t forget to check our website for more information. Bye!"], "sec": ["Intro", "Intro", "Intro", "Intro", "Intro", "Intro", "<Did You Know?>", "<Did You Know?>", "Bonhomme’s Ice Palace", "Bonhomme’s Ice Palace", "Bonhomme’s Ice Palace", "Bonhomme’s Ice Palace", "Bonhomme’s Ice Palace", "Bonhomme’s Ice Palace", "Bonhomme’s Ice Palace", "Bonhomme’s Ice Palace", "Bonhomme’s Ice Palace", "Bonhomme’s Ice Palace", "Toboggan Slide", "Toboggan Slide", "Toboggan Slide", "Toboggan Slide", "Toboggan Slide", "Toboggan Slide", "Toboggan Slide", "Toboggan Slide", "Ice Canoe Race", "Ice Canoe Race", "Ice Canoe Race", "Ice Canoe Race", "Ice Canoe Race", "Ice Canoe Race", "Ice Canoe Race", "Ice Canoe Race", "Ice Canoe Race", "Delicious Treats", "Delicious Treats", "Delicious Treats", "Delicious Treats", "Delicious Treats", "Delicious Treats", "Delicious Treats", "Delicious Treats", "Delicious Treats", "Delicious Treats", "Delicious Treats", "Delicious Treats"]}};
+/* ===================== 영어 시험 범위: 동아(이) 7·8과 ===================== */
+const EL=['중2 하','중2 중','중2 상'];
+const ncEn=lv=>({'중2 하':4,'중2 중':5,'중2 상':5})[lv]||4;
+const escH=s=>s.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+for(const L of ['L7','L8']){
+  const D=ENX[L],no=L==='L7'?'7과':'8과',W=D.words;
+  const TV=`${no} 어휘`,TR=`${no} 본문`;
+  G(ES,TV,EL,lv=>{const x=R.pick(W);return mc(`x-${L}-m-${x.w}`,`다음 영어 표현의 뜻으로 알맞은 것은? <b class="en">${x.w}</b>`,x.k,W.filter(y=>y!==x).map(y=>y.k),ncEn(lv));});
+  G(ES,TV,EL,lv=>{const x=R.pick(W);return mc(`x-${L}-w-${x.w}`,`‘${x.k}’에 해당하는 영어 표현은?`,x.w,W.filter(y=>y!==x).map(y=>y.w),ncEn(lv));});
+  G(ES,TV,['중2 중','중2 상'],lv=>{const x=R.pick(W.filter(y=>y.d));return mc(`x-${L}-d-${x.w}`,`다음 영영 풀이에 해당하는 단어는?${box(`<span class="en">${escH(x.d)}</span>`)}`,x.w,W.filter(y=>y!==x).map(y=>y.w),ncEn(lv));},1.2);
+  G(ES,TV,EL,lv=>{const ok=W.filter(y=>new RegExp(`\\b${y.w}\\b`,'i').test(y.e));const x=R.pick(ok);const s=x.e.replace(new RegExp(`\\b${x.w}\\b`,'i'),'_______');
+    return mc(`x-${L}-e-${x.w}`,`빈칸에 들어갈 말로 알맞은 것은?${box(`<span class="en">${escH(s)}</span><br><span class="hint">(${x.ek})</span>`)}`,x.w,W.filter(y=>y!==x&&!y.w.includes(' ')).map(y=>y.w),ncEn(lv));},1.2);
+  G(ES,TV,['중2 중','중2 상'],lv=>{const x=R.pick(W.filter(y=>!y.w.includes(' ')));return sa(`x-${L}-s-${x.w}`,`우리말 뜻에 맞는 영어 단어를 쓰시오. (${x.w[0]}로 시작)${box(x.k)}`,x.w);});
+  // 본문
+  const S=D.en.map((e,i)=>({e,k:D.ko?D.ko[i]:'',sec:D.sec[i],i}));
+  G(ES,TR,EL,lv=>{const cand=S.filter(s=>s.i+1<S.length&&S[s.i+1].sec===s.sec&&s.e.split(' ').length>3);const x=R.pick(cand),nx=S[x.i+1];
+    return mc(`x-${L}-nx-${x.i}`,`본문에서 다음 문장 바로 뒤에 이어지는 문장으로 알맞은 것은?${box(`<span class="en">${escH(x.e)}</span>`)}`,`<span class="en">${escH(nx.e)}</span>`,S.filter(s=>s.sec!==x.sec&&s.e.split(' ').length>3).map(s=>`<span class="en">${escH(s.e)}</span>`),ncEn(lv));},1.2);
+  G(ES,TR,EL,lv=>{const ws=W.filter(y=>!y.w.includes(' '));const cand=[];for(const s of S)for(const y of ws)if(new RegExp(`\\b${y.w}\\b`,'i').test(s.e))cand.push([s,y]);if(!cand.length)return null;const [s,y]=R.pick(cand);
+    const t=s.e.replace(new RegExp(`\\b${y.w}\\b`,'i'),'_______');return mc(`x-${L}-bl-${s.i}-${y.w}`,`본문의 빈칸에 들어갈 말로 알맞은 것은?${box(`<span class="en">${escH(t)}</span>`)}`,y.w,ws.filter(z=>z!==y).map(z=>z.w),ncEn(lv));},1.3);
+  if(D.ko)G(ES,TR,EL,lv=>{const x=R.pick(S.filter(s=>s.e.split(' ').length>4));if(Math.random()<0.5)return mc(`x-${L}-tr-${x.i}`,`다음 문장의 우리말 해석으로 알맞은 것은?${box(`<span class="en">${escH(x.e)}</span>`)}`,x.k,S.filter(s=>s!==x&&s.k).map(s=>s.k),ncEn(lv));
+    return mc(`x-${L}-tr2-${x.i}`,`다음 우리말을 영어로 바르게 옮긴 것은?${box(x.k)}`,`<span class="en">${escH(x.e)}</span>`,S.filter(s=>s!==x).map(s=>`<span class="en">${escH(s.e)}</span>`),ncEn(lv));});
+}
+const EN_TF={L7:[['Lily practiced for the school play for weeks.',1],['“Break a leg!” actually means “Good luck!”',1],['German actors who came to the United States in the early 20th century first used “Break a leg.”',1],['Tommy kept his promise and didn’t tell Hana about the party.',1],['“Spill the beans” means to reveal a secret.',1],['When Greeks voted, they put a white or black bean in a big jar.',1],['Emily had to go to her grandmother’s house.',1],['A rain check was a ticket for a future game when a game was canceled because of rain.',1],['The phrase “rain check” was first used at a baseball game in the 1880s.',1],
+ ['Lily didn’t practice for the school play at all.',0],['“Break a leg!” was first used by British actors.',0],['Tommy told Hana about the surprise party.',0],['“Spill the beans” comes from an ancient Roman way of cooking.',0],['Emily accepted Sarah’s offer to see a movie.',0],['“Take a rain check” means to accept an offer happily.',0],['Sarah got angry and didn’t understand Emily’s situation.',0],['The phrase “rain check” was first used at a soccer game.',0]],
+ L8:[['Bonhomme is the mascot of the Quebec Winter Carnival.',1],['Bonhomme means “good man” in French.',1],['The carnival is usually held for 10 days between January and February.',1],['A new ice palace is built for the carnival every year.',1],['The toboggan slide was built in 1884 and is 200 meters long.',1],['A toboggan is a long narrow sled.',1],['Canoe teams race through the icy river for about three kilometers.',1],['Canoe teams are usually made up of five members.',1],['Both men and women can join a canoe team.',1],['To make maple taffy, you pour hot maple syrup on the snow.',1],
+ ['Bonhomme is wearing a big blue hat.',0],['The Quebec Winter Carnival is held in summer.',0],['The same ice palace is used every year.',0],['The toboggan slide is 2,000 meters long.',0],['You can see a huge famous castle on your right.',0],['Canoe teams are usually made up of ten members.',0],['Only men can join the canoe teams.',0],['Maple taffy is made by pouring cold milk on the snow.',0],['Quebec is a city in France.',0]]};
+for(const L of ['L7','L8']){const T=EN_TF[L].map(a=>({s:a[0],o:a[1]})),tp=`${L==='L7'?'7과':'8과'} 본문`;
+  G(ES,tp,EL,lv=>{const want=Math.random()<0.5;const x=R.pick(T.filter(t=>!!t.o===want));return mc(`x-${L}-tf-${x.s}`,`본문의 내용과 ${want?'<b>일치하는</b>':'<b>일치하지 않는</b>'} 것은?`,`<span class="en">${x.s}</span>`,T.filter(t=>!!t.o!==want).map(t=>`<span class="en">${t.s}</span>`),ncEn(lv));},1.3);
+}
+// 7과 문법: 목적격 관계대명사
+const RELO=[['He is the singer ___ my sister likes a lot.','p'],['The girl ___ I met at the park was very kind.','p'],['She is the teacher ___ all the students respect.','p'],['The boy ___ we saw on the bus is my cousin.','p'],['Mr. Kim is the doctor ___ my family trusts.','p'],['Do you know the man ___ Mina is talking to?','p'],['This is the bag ___ I bought yesterday.','t'],['The movie ___ we watched last night was boring.','t'],['I lost the pen ___ my dad gave me.','t'],['The cake ___ Mina made was delicious.','t'],['Where is the book ___ you borrowed from the library?','t'],['The song ___ he sang was really catchy.','t'],['These are the idioms ___ we learned in class.','t']];
+G(ES,'7과 문법',EL,lv=>{const [s,t]=R.pick(RELO);return mcFixed(`x-rel-${s}`,`빈칸에 들어갈 관계대명사로 알맞은 것은?${box(`<span class="en">${s.replace('___','_______')}</span>`)}`,['whom','which','what','whose'],t==='p'?0:1,t==='p'?'선행사가 사람이고 목적격 → whom(who, that)':'선행사가 사물이고 목적격 → which(that)');},1.2);
+const RELC=[['The bag was expensive.','I bought it yesterday.','The bag which[that] I bought yesterday was expensive.'],['The girl is my sister.','You met her at the party.','The girl whom[who, that] you met at the party is my sister.'],['I lost the umbrella.','My mom bought it for me.','I lost the umbrella which[that] my mom bought for me.'],['He is the actor.','Many people love him.','He is the actor whom[who, that] many people love.'],['The pizza was delicious.','We ordered it.','The pizza which[that] we ordered was delicious.'],['This is the phone.','I want to buy it.','This is the phone which[that] I want to buy.'],['The teacher is very kind.','We like her.','The teacher whom[who, that] we like is very kind.'],['I read the book.','You recommended it.','I read the book which[that] you recommended.']];
+G(ES,'7과 문법',['중2 중','중2 상'],lv=>{const [a,b,c]=R.pick(RELC);return sa(`x-relc-${a}`,`관계대명사를 이용하여 두 문장을 한 문장으로 쓰시오.${box(`<span class="en">${a} ${b}</span>`)}`,c,'목적격 관계대명사는 생략할 수도 있음');});
+const ALT=[['it was raining','we played soccer outside','A'],['I was very tired','I finished my homework','A'],['she was nervous','she sang well on the stage','A'],['the movie was long','it was not boring','A'],['he is young','he is very wise','A'],['the test was difficult','Minsu got a good grade','A'],['he studied hard','he failed the test','A'],['Sarah was a little disappointed','she understood Emily’s situation','A'],['“Break a leg!” may sound like a bad thing','it actually means “Good luck!”','A'],['it was raining heavily','we stayed at home','B'],['I was very tired','I went to bed early','B'],['she studied hard','she passed the test','B'],['the box was too heavy','I couldn’t lift it','B'],['he was sick','he didn’t go to school','B'],['the movie was funny','everyone laughed a lot','B']].map(a=>({c1:a[0],c2:a[1],t:a[2]}));
+const cap=s=>s.replace(/^(“?)([a-z])/,(m,q,c)=>q+c.toUpperCase());
+G(ES,'7과 문법',EL,lv=>{const x=R.pick(ALT);return mcFixed(`x-alt-${x.c1}-${x.c2}`,`빈칸에 들어갈 말로 알맞은 것은?${box(`<span class="en">_______ ${x.c1}, ${x.c2}.</span>`)}`,['Although','Because'],x.t==='A'?0:1,x.t==='A'?'앞뒤 내용이 서로 반대 → Although(비록 ~이지만)':'앞 내용이 원인 → Because(~ 때문에)');},1.2);
+G(ES,'7과 문법',['중2 중','중2 상'],lv=>{const a=R.pick(ALT.filter(x=>x.t==='A'));const ds=R.sample(ALT.filter(x=>x.t==='B'),4).map(x=>`<span class="en">_______ ${x.c1}, ${x.c2}.</span>`);return mc(`x-alt2-${a.c1}`,'빈칸에 <b>Although</b>가 들어가기에 알맞은 것은?',`<span class="en">_______ ${a.c1}, ${a.c2}.</span>`,ds,ncEn(lv));});
+G(ES,'7과 문법',['중2 중','중2 상'],lv=>{const x=R.pick(ALT.filter(y=>y.t==='A'));return sa(`x-altw-${x.c1}`,`although를 이용하여 두 문장을 한 문장으로 쓰시오.${box(`<span class="en">${cap(x.c1)}. ${cap(x.c2)}.</span>`)}`,`Although ${x.c1}, ${x.c2}.`,`(${x.c2} although ${x.c1}.도 정답)`);});
+// 8과 문법: 의문사+to부정사, so ~ that
+const WHT=[['what','eat for lunch','점심으로 무엇을 먹을지'],['what','bring to the picnic','소풍에 무엇을 가져갈지'],['what','do here','여기서 무엇을 할지'],['what','buy for Mom’s birthday','엄마 생신 선물로 무엇을 살지'],['how','dance like Bonhomme','Bonhomme처럼 춤추는 방법을'],['how','make maple taffy','메이플 태피를 만드는 방법을'],['how','ride a bike','자전거 타는 방법을'],['how','solve this problem','이 문제를 푸는 방법을'],['where','go this weekend','이번 주말에 어디에 갈지'],['where','sit in the theater','극장에서 어디에 앉을지'],['where','put this box','이 상자를 어디에 둘지'],['when','leave for the airport','언제 공항으로 출발할지'],['when','call him','언제 그에게 전화할지'],['when','start the game','언제 경기를 시작할지'],['whom','invite to the party','파티에 누구를 초대할지'],['whom','ask for help','누구에게 도움을 청할지']];
+G(ES,'8과 문법',EL,lv=>{const [w,v,k]=R.pick(WHT);return mcFixed(`x-wh-${v}`,`우리말과 같도록 빈칸에 알맞은 말을 고르시오.${box(`나는 ${k} 모르겠다.<br><span class="en">I don’t know _______ to ${v}.</span>`)}`,['what','how','where','when','whom'],['what','how','where','when','whom'].indexOf(w));},1.3);
+G(ES,'8과 문법',['중2 중','중2 상'],lv=>{const [w,v,k]=R.pick(WHT);return sa(`x-whw-${v}`,`우리말과 같도록 ‘의문사+to부정사’를 이용하여 영어 문장을 완성하시오.${box(`나는 ${k} 모르겠다.<br><span class="en">I don’t know ____________________.</span>`)}`,`${w} to ${v}`);});
+const SOT=[['The toboggan','is','fast','you will feel like you are on a roller coaster'],['The race','is','exciting','you will forget about the cold'],['She','is','kind','everyone likes her'],['I','was','tired','I went to bed early'],['The box','was','heavy','he couldn’t lift it'],['The movie','was','funny','we laughed a lot'],['It','was','cold','we stayed at home'],['The question','was','difficult','nobody could answer it'],['The ice palace','is','beautiful','many people visit it at night']];
+G(ES,'8과 문법',EL,lv=>{const [s,b,a,r]=R.pick(SOT);return mc(`x-so-${s}-${a}`,`빈칸에 들어갈 말이 바르게 짝 지어진 것은?${box(`<span class="en">${s} ${b} (A)_____ ${a} (B)_____ ${r}.</span>`)}`,'(A) so – (B) that',['(A) too – (B) to','(A) very – (B) that','(A) so – (B) because','(A) such – (B) to'],ncEn(lv),'so + 형용사 + that ~: 너무 ~해서 …하다');});
+G(ES,'8과 문법',['중2 중','중2 상'],lv=>{const [s,b,a,r]=R.pick(SOT);return sa(`x-sow-${s}-${a}`,`so ~ that을 이용하여 두 문장을 한 문장으로 쓰시오.${box(`<span class="en">${s} ${b} very ${a}. ${cap(r)}.</span>`)}`,`${s} ${b} so ${a} that ${r}.`);});
+EXAM_TOPICS['영어']=['7과 어휘','7과 본문','7과 문법','8과 어휘','8과 본문','8과 문법'];EXAM_LABEL['영어']='동아(이) 7·8과';
+Object.assign(KW['영어'],{'7과 어휘':'7과|어휘|단어|시험','7과 본문':'7과|본문|독해|시험','7과 문법':'7과|관계대명사|although|문법|시험','8과 어휘':'8과|어휘|단어|시험','8과 본문':'8과|본문|독해|시험','8과 문법':'8과|to부정사|so that|문법|시험'});
+/* ===================== 수학 시험 범위: 지학사 수학2 Ⅴ~Ⅶ ===================== */
+const ML=['중2 하','중2 중','중2 상'];const ncM=lv=>({'중2 하':4,'중2 중':5,'중2 상':5})[lv]||4;
+const ln=(a,b)=>`y = ${poly([[a,'x'],[b,'']])}`;
+const pt=(x,y)=>`(${num(x)}, ${num(y)})`;
+const MT1='일차함수와 그래프',MT2='일차함수의 활용',MT3='일차함수와 일차방정식',MT4='삼각형의 성질',MT5='사각형의 성질',MT6='도형의 닮음',MT7='피타고라스 정리';
+G(MS,MT1,ML,lv=>{const a=R.nz(-5,5),b=R.nz(-8,8),k=R.ri(-4,4);if(k===0)return null;return sa(`n-tr-${a}-${b}-${k}`,`일차함수 y = ${poly([[a,'x']])}의 그래프를 y축의 방향으로 ${num(b)}만큼 평행이동한 그래프가 점 (${num(k)}, m)을 지날 때, m의 값을 구하시오.`,num(a*k+b),`평행이동한 식: ${ln(a,b)}`);});
+G(MS,MT1,ML,lv=>{const a=R.nz(-4,4),b=R.ri(-6,6);const xs=R.sample([-3,-2,-1,0,1,2,3],5);const c=pt(xs[0],a*xs[0]+b);const ds=xs.slice(1).map(x=>pt(x,a*x+b+R.pick([-2,-1,1,2])));return mc(`n-on-${a}-${b}-${xs[0]}`,`다음 중 일차함수 ${ln(a,b)}의 그래프 위의 점은?`,c,ds,ncM(lv));});
+G(MS,MT1,ML,lv=>{const a=R.nz(-5,5),b=R.nz(-6,6);const q=a>0?(b>0?3:1):(b>0?2:0);return mcFixed(`n-q-${a}-${b}`,`일차함수 ${ln(a,b)}의 그래프가 지나지 <u>않는</u> 사분면은?`,['제1사분면','제2사분면','제3사분면','제4사분면'],q,`기울기 ${a>0?'양수':'음수'}, y절편 ${b>0?'양수':'음수'}`);});
+G(MS,MT1,ML,lv=>{const a=R.nz(-4,4),b=R.ri(-6,6),x1=R.ri(-4,2),x2=x1+R.ri(1,4);return sa(`n-sl-${a}-${b}-${x1}-${x2}`,`두 점 ${pt(x1,a*x1+b)}, ${pt(x2,a*x2+b)}를 지나는 직선의 기울기를 구하시오.`,num(a),'기울기 = (y의 값의 증가량) ÷ (x의 값의 증가량)');});
+G(MS,MT1,['중2 중','중2 상'],lv=>{const a=R.nz(-4,4),b=R.ri(-6,6),p=R.ri(-3,3),c=R.ri(-6,6);if(c===b)return null;return sa(`n-par-${a}-${b}-${p}-${c}`,`일차함수 ${ln(a,c)}의 그래프와 평행하고 점 ${pt(p,a*p+b)}를 지나는 직선을 그래프로 하는 일차함수의 식을 구하시오.`,ln(a,b),'평행한 두 직선은 기울기가 같다.');},1.2);
+G(MS,MT1,['중2 중','중2 상'],lv=>{const m=R.nz(-5,5),k=R.nz(-3,3);const n=m*k*(R.pick([1,-1]));const a=-n/m;if(!Number.isInteger(a)||a===0)return null;return sa(`n-int-${m}-${n}`,`x절편이 ${num(m)}, y절편이 ${num(n)}인 직선을 그래프로 하는 일차함수의 식을 구하시오.`,ln(a,n),`기울기 = −(y절편)÷(x절편) = ${num(a)}`);});
+G(MS,MT1,['중2 상'],lv=>{const a=R.nz(-3,3),b=R.ri(-5,5),x1=R.ri(-3,0),x2=R.ri(1,3),x3=R.ri(4,6);return sa(`n-col-${a}-${b}-${x1}-${x2}-${x3}`,`세 점 ${pt(x1,a*x1+b)}, ${pt(x2,a*x2+b)}, (${x3}, k)가 한 직선 위에 있을 때, k의 값을 구하시오.`,num(a*x3+b));});
+G(MS,MT1,ML,lv=>{const a=R.nz(-5,5),b=R.nz(-8,8);const st=[`기울기는 ${num(a)}이다.`,`y절편은 ${num(b)}이다.`,`x의 값이 1만큼 증가하면 y의 값은 ${Math.abs(a)}만큼 ${a>0?'증가':'감소'}한다.`,`점 ${pt(1,a+b)}를 지난다.`];const fl=[`기울기는 ${num(-a)}이다.`,`y절편은 ${num(-b)}이다.`,`x의 값이 1만큼 증가하면 y의 값은 ${Math.abs(a)}만큼 ${a>0?'감소':'증가'}한다.`,`점 ${pt(1,a+b+1)}를 지난다.`,`y = ${poly([[a,'x']])}의 그래프와 한 점에서 만난다.`];
+  return mc(`n-st-${a}-${b}`,`일차함수 ${ln(a,b)}의 그래프에 대한 설명으로 옳은 것은?`,R.pick(st),fl,ncM(lv));});
+// 활용
+G(MS,MT2,ML,lv=>{const t=R.ri(1,4);
+  if(t===1){const L0=R.ri(10,30),w=R.pick([5,10,20]),d=R.ri(1,3),X=w*R.ri(3,10);return sa(`n-spr-${L0}-${w}-${d}-${X}`,`길이가 ${L0} cm인 용수철에 물건을 매달면 무게가 ${w} g씩 늘어날 때마다 길이가 ${d} cm씩 늘어난다. ${X} g의 물건을 매달았을 때 용수철의 길이를 구하시오.`,`${L0+d*X/w} cm`,`y = ${L0} + ${d}/${w}·x`);}
+  if(t===2){const r=R.ri(2,6),m=R.ri(5,20),V=r*m+r*R.ri(0,10);const tt=R.ri(2,m);return sa(`n-tank-${V}-${r}-${tt}`,`${V} L의 물이 들어 있는 물통에서 1분마다 ${r} L씩 물이 일정하게 빠져나간다. 물이 빠져나가기 시작한 지 ${tt}분 후 물통에 남은 물의 양을 구하시오.`,`${V-r*tt} L`,`y = ${V} − ${r}x`);}
+  if(t===3){const T=R.ri(15,30),h=R.ri(1,4);return sa(`n-temp-${T}-${h}`,`지면의 기온이 ${T}℃이고, 지면에서 1 km 높아질 때마다 기온이 6℃씩 내려간다. 지면에서 ${h} km 높이에서의 기온을 구하시오.`,`${num(T-6*h)}℃`,`y = ${T} − 6x`);}
+  const L=R.ri(15,30),c=R.pick([0.5,1,2]),k=R.ri(2,8);if(L-c*k<=0)return null;return sa(`n-cdl-${L}-${c}-${k}`,`길이가 ${L} cm인 양초가 1분마다 ${c} cm씩 일정하게 타서 짧아진다. 불을 붙인 지 ${k}분 후 양초의 길이를 구하시오.`,`${L-c*k} cm`);},1.3);
+G(MS,MT2,['중2 중','중2 상'],lv=>{const r=R.ri(2,6),m=R.ri(5,20),V=r*m;return sa(`n-empty-${V}-${r}`,`${V} L의 물이 들어 있는 물통에서 1분마다 ${r} L씩 물이 일정하게 빠져나간다. 물이 모두 빠져나가는 데 걸리는 시간을 구하시오.`,`${m}분`);});
+// 일차방정식
+G(MS,MT3,ML,lv=>{const bb=R.pick([1,-1,2,-2,3,-3]),k1=R.nz(-4,4),k2=R.ri(-6,6);const a=-bb*k1,c=-bb*k2;const eq=`${poly([[a,'x'],[bb,'y'],[c,'']])} = 0`;
+  if(Math.random()<0.5)return sa(`n-eqs-${a}-${bb}-${c}`,`일차방정식 ${eq}의 그래프의 기울기를 구하시오.`,num(k1),`y = ${poly([[k1,'x'],[k2,'']])}`);return sa(`n-eqi-${a}-${bb}-${c}`,`일차방정식 ${eq}의 그래프의 y절편을 구하시오.`,num(k2),`y = ${poly([[k1,'x'],[k2,'']])}`);});
+G(MS,MT3,ML,lv=>{const p=R.nz(-6,6),q=R.nz(-6,6);const xa=Math.random()<0.5;return sa(`n-axl-${p}-${q}-${xa}`,`점 ${pt(p,q)}를 지나고 ${xa?'x축':'y축'}에 수직인 직선의 방정식을 구하시오.`,xa?`x = ${num(p)}`:`y = ${num(q)}`,xa?'x축에 수직인 직선: x = (상수)':'y축에 수직인 직선: y = (상수)');});
+G(MS,MT3,ML,lv=>{const x=R.ri(-4,5),y=R.ri(-4,5);const a1=R.nz(-3,3),b1=R.nz(-3,3),a2=R.nz(-3,3),b2=R.nz(-3,3);if(a1*b2-a2*b1===0)return null;return sa(`n-cross-${a1}${b1}${a2}${b2}-${x}-${y}`,`두 일차방정식 ${poly([[a1,'x'],[b1,'y']])} = ${num(a1*x+b1*y)}, ${poly([[a2,'x'],[b2,'y']])} = ${num(a2*x+b2*y)}의 그래프의 교점의 좌표를 구하시오.`,pt(x,y),'두 그래프의 교점의 좌표 = 연립방정식의 해');});
+G(MS,MT3,['중2 중','중2 상'],lv=>{const x=R.nz(-4,4),y=R.ri(-4,5),a=R.nz(-4,4),b=R.nz(-3,3);return sa(`n-ka-${x}-${y}-${a}-${b}`,`두 일차방정식 ax + y = ${num(a*x+y)}, ${poly([[1,'x'],[b,'y']])} = ${num(x+b*y)}의 그래프의 교점의 x좌표가 ${num(x)}일 때, 상수 a의 값을 구하시오.`,num(a),`교점: ${pt(x,y)}`);});
+G(MS,MT3,['중2 상'],lv=>{const x=R.nz(-3,3),y=R.nz(-3,3),a=R.nz(-4,4);if(x===y)return null;return sa(`n-three-${x}-${y}-${a}`,`세 직선 x + y = ${num(x+y)}, x ${M} y = ${num(x-y)}, ax + y = ${num(a*x+y)}가 한 점에서 만날 때, 상수 a의 값을 구하시오.`,num(a),`앞의 두 직선의 교점 ${pt(x,y)}를 셋째 식에 대입`);});
+G(MS,MT3,['중2 중','중2 상'],lv=>{const k=R.ri(1,3);const t=R.pick(['해가 없다','해가 무수히 많다']);const a=R.nz(-3,3),b=R.nz(-3,3),c=R.nz(-5,5);const c2=t==='해가 없다'?c*k+R.pick([1,2,-1]):c*k;return mcFixed(`n-sys-${a}${b}${c}${k}${t}`,`연립방정식 ${poly([[a,'x'],[b,'y']])} = ${num(c)}, ${poly([[a*k,'x'],[b*k,'y']])} = ${num(c2)}의 해에 대한 설명으로 옳은 것은?`,['해가 한 쌍이다','해가 없다','해가 무수히 많다'],['해가 한 쌍이다','해가 없다','해가 무수히 많다'].indexOf(t),t==='해가 없다'?'두 직선이 평행(기울기 같고 y절편 다름)':'두 직선이 일치');});
+// 삼각형
+G(MS,MT4,ML,lv=>{if(Math.random()<0.5){const A=2*R.ri(10,70);return sa(`n-iso1-${A}`,`AB = AC인 이등변삼각형 ABC에서 ∠A = ${A}°일 때, ∠B의 크기를 구하시오.`,`${(180-A)/2}°`,'이등변삼각형의 두 밑각의 크기는 같다.');}
+  const B=R.ri(25,80);return sa(`n-iso2-${B}`,`AB = AC인 이등변삼각형 ABC에서 ∠B = ${B}°일 때, ∠A의 크기를 구하시오.`,`${180-2*B}°`);},1.2);
+G(MS,MT4,ML,lv=>{const t=R.pick(['RHA','RHS']);const d=t==='RHA'?'빗변의 길이와 한 예각의 크기가 각각 같은':'빗변의 길이와 다른 한 변의 길이가 각각 같은';return mcFixed(`n-rh-${t}`,`두 직각삼각형에서 ${d} 경우의 합동 조건은?`,['RHA 합동','RHS 합동','SAS 합동','ASA 합동','SSS 합동'],t==='RHA'?0:1);});
+G(MS,MT4,ML,lv=>{const t=R.ri(1,3);
+  if(t===1){const A=R.ri(25,85);return sa(`n-oc1-${A}`,`점 O가 예각삼각형 ABC의 외심이고 ∠A = ${A}°일 때, ∠BOC의 크기를 구하시오.`,`${2*A}°`,'∠BOC = 2∠A');}
+  if(t===2){const x=R.ri(10,40),y=R.ri(10,40);if(x+y>=80)return null;return sa(`n-oc2-${x}-${y}`,`점 O가 △ABC의 외심이고 ∠OAB = ${x}°, ∠OBC = ${y}°일 때, ∠OCA의 크기를 구하시오.`,`${90-x-y}°`,'∠OAB + ∠OBC + ∠OCA = 90°');}
+  const [a,b,c]=R.pick([[3,4,5],[6,8,10],[5,12,13],[8,15,17],[9,12,15]]);return sa(`n-oc3-${c}`,`∠C = 90°인 직각삼각형 ABC에서 AC = ${a} cm, BC = ${b} cm, AB = ${c} cm일 때, △ABC의 외접원의 반지름의 길이를 구하시오.`,`${c/2} cm`,'직각삼각형의 외심은 빗변의 중점');},1.3);
+G(MS,MT4,['중2 중','중2 상'],lv=>{const t=R.ri(1,3);
+  if(t===1){const A=2*R.ri(15,60);return sa(`n-ic1-${A}`,`점 I가 △ABC의 내심이고 ∠A = ${A}°일 때, ∠BIC의 크기를 구하시오.`,`${90+A/2}°`,'∠BIC = 90° + ½∠A');}
+  if(t===2){const x=R.ri(10,40),y=R.ri(10,40);if(x+y>=80)return null;return sa(`n-ic2-${x}-${y}`,`점 I가 △ABC의 내심이고 ∠IAB = ${x}°, ∠IBC = ${y}°일 때, ∠ICA의 크기를 구하시오.`,`${90-x-y}°`,'∠IAB + ∠IBC + ∠ICA = 90°');}
+  const [a,b,c]=R.pick([[3,4,5],[6,8,10],[5,12,13],[8,15,17],[9,12,15],[12,16,20]]);return sa(`n-ic3-${c}`,`∠C = 90°인 직각삼각형 ABC에서 세 변의 길이가 ${a} cm, ${b} cm, ${c} cm일 때, 내접원의 반지름의 길이를 구하시오.`,`${(a+b-c)/2} cm`,'넓이 = ½ × r × (세 변의 길이의 합)');},1.3);
+const TRI_ST=[['삼각형의 외심은 세 변의 수직이등분선의 교점이다.',1],['삼각형의 내심은 세 내각의 이등분선의 교점이다.',1],['외심에서 세 꼭짓점에 이르는 거리는 모두 같다.',1],['내심에서 세 변에 이르는 거리는 모두 같다.',1],['직각삼각형의 외심은 빗변의 중점이다.',1],['둔각삼각형의 외심은 삼각형의 외부에 있다.',1],['이등변삼각형의 꼭지각의 이등분선은 밑변을 수직이등분한다.',1],['삼각형의 외심은 세 내각의 이등분선의 교점이다.',0],['내심에서 세 꼭짓점에 이르는 거리는 모두 같다.',0],['직각삼각형의 외심은 삼각형의 내부에 있다.',0],['둔각삼각형의 내심은 삼각형의 외부에 있다.',0],['세 대응각의 크기가 각각 같은 두 삼각형은 항상 합동이다.',0]];
+G(MS,MT4,ML,lv=>{const want=Math.random()<0.5;const x=R.pick(TRI_ST.filter(s=>!!s[1]===want));return mc(`n-tst-${x[0]}`,`다음 중 옳${want?'은':'지 <u>않은</u>'} 것은?`,x[0],TRI_ST.filter(s=>!!s[1]!==want).map(s=>s[0]),ncM(lv));});
+// 사각형
+G(MS,MT5,ML,lv=>{const t=R.ri(1,3);if(t===1){const A=R.ri(50,130);if(A===90)return null;return sa(`n-pg1-${A}`,`평행사변형 ABCD에서 ∠A = ${A}°일 때, ∠B의 크기를 구하시오.`,`${180-A}°`,'이웃한 두 각의 크기의 합은 180°');}
+  if(t===2){const o=R.ri(3,12);return sa(`n-pg2-${o}`,`평행사변형 ABCD의 두 대각선의 교점을 O라고 할 때, OA = ${o} cm이면 AC의 길이를 구하시오.`,`${2*o} cm`,'평행사변형의 두 대각선은 서로 다른 것을 이등분한다.');}
+  const S=4*R.ri(5,30);return sa(`n-pg3-${S}`,`넓이가 ${S} cm²인 평행사변형 ABCD의 두 대각선의 교점을 O라고 할 때, △OAB의 넓이를 구하시오.`,`${S/4} cm²`);},1.2);
+G(MS,MT5,['중2 중','중2 상'],lv=>{const S=2*R.ri(10,60),x=R.ri(3,S/2-3);return sa(`n-pg4-${S}-${x}`,`넓이가 ${S} cm²인 평행사변형 ABCD의 내부의 한 점 P에 대하여 △PAB의 넓이가 ${x} cm²일 때, △PCD의 넓이를 구하시오.`,`${S/2-x} cm²`,'△PAB + △PCD = ½ □ABCD');});
+const PGC_T=['두 쌍의 대변이 각각 평행하다.','두 쌍의 대변의 길이가 각각 같다.','두 쌍의 대각의 크기가 각각 같다.','두 대각선이 서로 다른 것을 이등분한다.','한 쌍의 대변이 평행하고, 그 길이가 같다.'],PGC_F=['한 쌍의 대변이 평행하고, 다른 한 쌍의 대변의 길이가 같다.','두 대각선의 길이가 같다.','이웃한 두 각의 크기가 같다.','한 쌍의 대각의 크기가 같다.','두 대각선이 서로 수직으로 만난다.'];
+G(MS,MT5,ML,lv=>{const c=R.pick(PGC_T);return mc(`n-pgc-${c}`,'다음 중 □ABCD가 평행사변형이 되는 조건은?',c,PGC_F,ncM(lv));},1.2);
+const QD=[['두 대각선의 길이가 같다.',['직사각형','정사각형','등변사다리꼴']],['두 대각선이 서로 수직으로 만난다.',['마름모','정사각형']],['두 대각선이 서로 다른 것을 이등분한다.',['평행사변형','직사각형','마름모','정사각형']],['네 변의 길이가 모두 같다.',['마름모','정사각형']],['네 내각의 크기가 모두 같다.',['직사각형','정사각형']]];
+const QN=['평행사변형','직사각형','마름모','정사각형','등변사다리꼴','사다리꼴'];
+G(MS,MT5,ML,lv=>{const [p,ok]=R.pick(QD);const c=R.pick(ok);return mc(`n-qd-${p}-${c}`,`다음 중 <b>${p.replace(/\.$/,'')}</b>는 성질을 항상 만족하는 사각형은?`,c,QN.filter(q=>!ok.includes(q)),Math.min(ncM(lv),QN.length-ok.length+1));});
+const QTR=[['평행사변형이 직사각형이 되려면','한 내각이 직각이어야 한다.'],['평행사변형이 직사각형이 되려면','두 대각선의 길이가 같아야 한다.'],['평행사변형이 마름모가 되려면','이웃한 두 변의 길이가 같아야 한다.'],['평행사변형이 마름모가 되려면','두 대각선이 서로 수직으로 만나야 한다.']];
+G(MS,MT5,['중2 중','중2 상'],lv=>{const [h,c]=R.pick(QTR);return mc(`n-qtr-${h}-${c}`,`${h} 필요한 조건으로 알맞은 것은?`,c,QTR.filter(x=>x[0]!==h).map(x=>x[1]).concat(['두 쌍의 대변이 각각 평행해야 한다.']),Math.min(ncM(lv),4));});
+const MIDQ=[['사각형','평행사변형'],['평행사변형','평행사변형'],['직사각형','마름모'],['마름모','직사각형'],['정사각형','정사각형'],['등변사다리꼴','마름모']];
+G(MS,MT5,['중2 상'],lv=>{const [a,b]=R.pick(MIDQ);return mc(`n-midq-${a}`,`${a}의 각 변의 중점을 연결하여 만든 사각형은?`,b,['평행사변형','직사각형','마름모','정사각형','사다리꼴'],5);});
+// 닮음
+G(MS,MT6,ML,lv=>{const m=R.ri(1,4),n=R.ri(m+1,7);if(gcd(m,n)!==1)return null;const k=R.ri(2,5);const a=m*k,b=n*k,s=m*R.ri(2,6);return sa(`n-sim1-${a}-${b}-${s}`,`△ABC ∽ △DEF이고 AB = ${a} cm, DE = ${b} cm, BC = ${s} cm일 때, EF의 길이를 구하시오.`,`${s*n/m} cm`,`닮음비 ${m} : ${n}`);},1.2);
+G(MS,MT6,ML,lv=>{const m=R.ri(1,4),n=R.ri(m+1,6);if(gcd(m,n)!==1)return null;if(Math.random()<0.5){const S=m*m*R.ri(2,9);return sa(`n-area-${m}-${n}-${S}`,`닮음비가 ${m} : ${n}인 두 평면도형에서 작은 도형의 넓이가 ${S} cm²일 때, 큰 도형의 넓이를 구하시오.`,`${S*n*n/(m*m)} cm²`,`넓이의 비 = ${m*m} : ${n*n}`);}
+  const V=m*m*m*R.ri(1,5);return sa(`n-vol-${m}-${n}-${V}`,`닮음비가 ${m} : ${n}인 두 입체도형에서 작은 입체도형의 부피가 ${V} cm³일 때, 큰 입체도형의 부피를 구하시오.`,`${V*n**3/m**3} cm³`,`부피의 비 = ${m**3} : ${n**3}`);},1.3);
+G(MS,MT6,ML,lv=>{const t=R.pick(['SSS','SAS','AA']);const d={SSS:'세 쌍의 대응변의 길이의 비가 같은',SAS:'두 쌍의 대응변의 길이의 비가 같고, 그 끼인각의 크기가 같은',AA:'두 쌍의 대응각의 크기가 각각 같은'}[t];return mcFixed(`n-simc-${t}`,`두 삼각형에서 ${d} 경우의 닮음 조건은?`,['SSS 닮음','SAS 닮음','AA 닮음','RHS 닮음'],['SSS','SAS','AA'].indexOf(t));});
+G(MS,MT6,['중2 중','중2 상'],lv=>{const tt=R.ri(1,2),sw=Math.random()<0.5;let bd=9*tt,dc=16*tt;if(sw)[bd,dc]=[dc,bd];const bc=bd+dc,ab=Math.sqrt(bd*bc),ad=Math.sqrt(bd*dc);const q=R.ri(1,2);
+  if(q===1)return sa(`n-rt1-${bd}-${dc}`,`∠A = 90°인 직각삼각형 ABC에서 AD ⊥ BC이고 BD = ${bd} cm, DC = ${dc} cm일 때, AD의 길이를 구하시오.`,`${ad} cm`,'AD² = BD × DC');
+  return sa(`n-rt2-${bd}-${dc}`,`∠A = 90°인 직각삼각형 ABC에서 AD ⊥ BC이고 BD = ${bd} cm, DC = ${dc} cm일 때, AB의 길이를 구하시오.`,`${ab} cm`,'AB² = BD × BC');},1.2);
+G(MS,MT6,ML,lv=>{const m=R.ri(1,4),n=R.ri(1,4),k=R.ri(1,4);if(Math.random()<0.5){const ad=m*k,db=n*k,ae=m*R.ri(1,4);return sa(`n-pl1-${ad}-${db}-${ae}`,`△ABC에서 DE ∥ BC이고 점 D, E가 각각 AB, AC 위에 있다. AD = ${ad} cm, DB = ${db} cm, AE = ${ae} cm일 때, EC의 길이를 구하시오.`,`${ae*n/m} cm`,'AD : DB = AE : EC');}
+  const de=m*R.ri(1,4),ad=m*k,ab=(m+n)*k;return sa(`n-pl2-${ad}-${ab}-${de}`,`△ABC에서 DE ∥ BC이고 점 D, E가 각각 AB, AC 위에 있다. AD = ${ad} cm, AB = ${ab} cm, DE = ${de} cm일 때, BC의 길이를 구하시오.`,`${de*(m+n)/m} cm`,'AD : AB = DE : BC');},1.2);
+G(MS,MT6,ML,lv=>{const bc=2*R.ri(3,15);return sa(`n-mid-${bc}`,`△ABC에서 두 변 AB, AC의 중점을 각각 M, N이라고 하자. BC = ${bc} cm일 때, MN의 길이를 구하시오.`,`${bc/2} cm`,'삼각형의 두 변의 중점을 연결한 선분의 성질');});
+G(MS,MT6,ML,lv=>{const t=R.ri(1,3);if(t===1){const ad=3*R.ri(2,10);return sa(`n-g1-${ad}`,`점 G가 △ABC의 무게중심이고 AD가 중선일 때, AD = ${ad} cm이면 AG의 길이를 구하시오.`,`${ad*2/3} cm`,'AG : GD = 2 : 1');}
+  if(t===2){const S=6*R.ri(3,15);return sa(`n-g2-${S}`,`점 G가 넓이 ${S} cm²인 △ABC의 무게중심일 때, △GAB의 넓이를 구하시오.`,`${S/3} cm²`);}
+  const S=6*R.ri(3,15);return sa(`n-g3-${S}`,`점 G가 넓이 ${S} cm²인 △ABC의 무게중심이고 점 D가 BC의 중점일 때, △GBD의 넓이를 구하시오.`,`${S/6} cm²`);},1.2);
+G(MS,MT6,['중2 중','중2 상'],lv=>{const a=R.ri(2,6),b=R.ri(2,6),k=R.ri(2,3);return sa(`n-par3-${a}-${b}-${k}`,`세 직선 l, m, n이 서로 평행하고 두 직선이 이들과 만난다. 한 직선 위의 선분의 길이가 ${a} cm, ${b} cm이고, 다른 직선 위의 대응하는 선분 중 첫 번째 선분의 길이가 ${a*k} cm일 때, 두 번째 선분의 길이를 구하시오.`,`${b*k} cm`,'평행선 사이의 선분의 길이의 비는 같다.');});
+// 피타고라스
+const TRIP=[[3,4,5],[6,8,10],[5,12,13],[8,15,17],[9,12,15],[12,16,20],[7,24,25],[15,20,25]];
+G(MS,MT7,ML,lv=>{const [a,b,c]=R.pick(TRIP);const t=R.ri(1,3);if(t===1)return sa(`n-py1-${a}-${b}`,`∠C = 90°인 직각삼각형 ABC에서 AC = ${a} cm, BC = ${b} cm일 때, AB의 길이를 구하시오.`,`${c} cm`,'c² = a² + b²');
+  if(t===2)return sa(`n-py2-${a}-${c}`,`빗변의 길이가 ${c} cm이고 다른 한 변의 길이가 ${a} cm인 직각삼각형에서 나머지 한 변의 길이를 구하시오.`,`${b} cm`);
+  return sa(`n-py3-${a}-${b}`,`가로의 길이가 ${a} cm, 세로의 길이가 ${b} cm인 직사각형의 대각선의 길이를 구하시오.`,`${c} cm`);},1.3);
+G(MS,MT7,ML,lv=>{const r=R.pick(TRIP);const fake=()=>{const x=R.ri(3,12),y=R.ri(x+1,15),z=R.ri(y+1,20);return (x*x+y*y===z*z||x+y<=z)?null:`${x} cm, ${y} cm, ${z} cm`;};const ds=[];for(let i=0;i<20&&ds.length<6;i++){const f=fake();if(f)ds.push(f);}
+  return mc(`n-pyj-${r.join('-')}`,'세 변의 길이가 다음과 같은 삼각형 중 직각삼각형인 것은?',`${r[0]} cm, ${r[1]} cm, ${r[2]} cm`,ds,ncM(lv));});
+G(MS,MT7,['중2 중','중2 상'],lv=>{const a=R.ri(2,9),b=R.ri(2,9);return sa(`n-pysq-${a}-${b}`,`직각삼각형 ABC의 빗변이 아닌 두 변 위에 그린 정사각형의 넓이가 각각 ${a*a} cm², ${b*b} cm²일 때, 빗변 위에 그린 정사각형의 넓이를 구하시오.`,`${a*a+b*b} cm²`);});
+EXAM_TOPICS['수학']=[MT1,MT2,MT3,MT4,MT5,MT6,MT7];EXAM_LABEL['수학']='지학사 수학2 Ⅴ~Ⅶ';
+Object.assign(KW['수학'],{[MT1]:'일차함수|그래프|기울기|절편|시험',[MT2]:'활용|문장제|일차함수|시험',[MT3]:'일차방정식|교점|연립|그래프|시험',[MT4]:'삼각형|이등변|외심|내심|도형|시험',[MT5]:'사각형|평행사변형|마름모|직사각형|도형|시험',[MT6]:'닮음|비|무게중심|도형|시험',[MT7]:'피타고라스|직각삼각형|시험'});
+const mcF0=(id,q,ch,ai,exp)=>mc(id,q,ch[0],ch.slice(1),ch.length,exp);
+/* ===================== 과학 시험 범위: 천재 과학2 Ⅵ 동물과 에너지, Ⅶ 전기와 자기 ===================== */
+const ST1='소화',ST2='순환',ST3='호흡과 배설',ST4='정전기',ST5='전류·전압·저항',ST6='전기 에너지',ST7='전류와 자기장';
+const ncS=lv=>[3,4,5,5][LV4.indexOf(lv)];
+const SX_ST=[
+[ST1,'소화계는 입, 식도, 위, 작은창자, 큰창자, 항문과 침샘, 간, 쓸개, 이자로 구성된다.',1,'기초'],[ST1,'녹말은 입에서 처음 소화되기 시작한다.',1,'기초'],[ST1,'단백질의 소화는 위에서 시작된다.',1,'하'],[ST1,'쓸개즙은 간에서 만들어져 쓸개에 저장된다.',1,'하'],[ST1,'쓸개즙은 큰 지방 덩어리를 작은 지방 알갱이로 나누어 지방의 소화를 돕는다.',1,'중'],[ST1,'이자액에는 탄수화물, 단백질, 지방을 각각 소화하는 소화효소가 들어 있다.',1,'중'],[ST1,'영양소의 흡수는 주로 작은창자에서 일어난다.',1,'기초'],[ST1,'작은창자 안쪽 벽의 융털은 영양소를 흡수하는 표면적을 넓혀 준다.',1,'중'],[ST1,'지방은 지방산과 모노글리세리드로 최종 분해된다.',1,'상'],[ST1,'수용성 영양소는 융털의 모세혈관으로, 지용성 영양소는 암죽관으로 흡수된다.',1,'상'],
+[ST1,'쓸개즙에는 녹말, 단백질, 지방을 분해하는 소화효소가 모두 들어 있다.',0,'하','쓸개즙에는 소화효소가 없다.'],[ST1,'단백질의 소화는 입에서 시작된다.',0,'기초','단백질의 소화는 위에서 시작된다.'],[ST1,'쓸개즙은 쓸개에서 만들어진다.',0,'중','쓸개즙은 간에서 만들어진다.'],[ST1,'영양소의 흡수는 주로 큰창자에서 일어난다.',0,'하','영양소는 주로 작은창자에서 흡수된다.'],[ST1,'이자액에는 소화효소가 들어 있지 않다.',0,'중','이자액에는 아밀레이스, 트립신, 라이페이스가 들어 있다.'],
+[ST2,'심장에는 판막이 있어 혈액이 거꾸로 흐르는 것을 막는다.',1,'기초'],[ST2,'동맥은 심장에서 나가는 혈액이 흐르는 혈관이다.',1,'기초'],[ST2,'정맥은 심장으로 들어오는 혈액이 흐르는 혈관이다.',1,'기초'],[ST2,'모세혈관에서는 혈액과 조직세포 사이에 물질 교환이 일어난다.',1,'하'],[ST2,'산소는 주로 적혈구에 의해 운반된다.',1,'하'],[ST2,'영양소, 노폐물, 이산화 탄소는 혈장에 녹아 운반된다.',1,'중'],[ST2,'허파순환은 우심실 → 폐동맥 → 폐의 모세혈관 → 폐정맥 → 좌심방 순으로 일어난다.',1,'상'],[ST2,'온몸순환은 좌심실 → 대동맥 → 온몸의 모세혈관 → 대정맥 → 우심방 순으로 일어난다.',1,'상'],[ST2,'좌심실은 온몸으로 혈액을 내보내므로 벽이 가장 두껍다.',1,'중'],
+[ST2,'동맥을 흐르는 혈액은 항상 산소가 풍부하다.',0,'중','폐동맥에는 산소가 적은 혈액이 흐른다.'],[ST2,'산소는 주로 혈장에 녹아 운반된다.',0,'하','산소는 주로 적혈구가 운반한다.'],[ST2,'정맥은 심장에서 나가는 혈액이 흐르는 혈관이다.',0,'기초','정맥은 심장으로 들어오는 혈액이 흐르는 혈관이다.'],[ST2,'폐정맥에는 산소가 적은 혈액이 흐른다.',0,'상','폐정맥에는 폐에서 산소를 받은 혈액이 흐른다.'],[ST2,'혈소판은 산소를 운반한다.',0,'하','혈소판은 혈액 응고에 관여한다.'],
+[ST3,'호흡계는 코, 숨관, 숨관가지, 폐 등으로 이루어져 있다.',1,'기초'],[ST3,'허파꽈리는 숨관가지에 연결된 작은 주머니이다.',1,'하'],[ST3,'허파꽈리와 모세혈관 사이에서 산소와 이산화 탄소가 교환된다.',1,'하'],[ST3,'들숨일 때 갈비뼈는 올라가고 가로막은 내려간다.',1,'중'],[ST3,'들숨일 때 흉강의 부피는 커지고 압력은 낮아진다.',1,'상'],[ST3,'날숨일 때 갈비뼈는 내려가고 가로막은 올라간다.',1,'중'],[ST3,'콩팥단위는 오줌을 만드는 기본 단위이다.',1,'하'],[ST3,'오줌은 여과, 재흡수, 분비 과정을 거쳐 만들어진다.',1,'중'],[ST3,'포도당은 토리에서 보먼주머니로 여과된 뒤 세뇨관에서 모두 재흡수된다.',1,'상'],[ST3,'오줌은 콩팥 → 오줌관 → 방광 → 요도를 거쳐 몸 밖으로 나간다.',1,'하'],[ST3,'세포호흡은 영양소와 산소를 이용하여 에너지를 얻는 과정이다.',1,'기초'],[ST3,'소화, 순환, 호흡, 배설은 통합적으로 작용하여 우리 몸에 필요한 에너지를 만든다.',1,'기초'],
+[ST3,'들숨일 때 흉강의 압력은 높아진다.',0,'상','들숨일 때 흉강의 압력은 낮아진다.'],[ST3,'들숨일 때 가로막은 올라간다.',0,'중','들숨일 때 가로막은 내려간다.'],[ST3,'세포호흡은 에너지를 저장하는 과정이다.',0,'하','세포호흡은 에너지를 얻는 과정이다.'],[ST3,'포도당은 토리에서 보먼주머니로 여과되지 못한다.',0,'상','포도당처럼 크기가 작은 물질은 보먼주머니로 여과된다.'],[ST3,'단백질과 혈구는 토리에서 보먼주머니로 쉽게 여과된다.',0,'상','크기가 큰 단백질과 혈구는 여과되지 않는다.'],[ST3,'오줌은 방광에서 만들어진다.',0,'기초','오줌은 콩팥에서 만들어지고 방광에 저장된다.'],
+[ST4,'서로 다른 물체를 마찰하면 전자가 이동하여 두 물체가 서로 다른 종류의 전하를 띤다.',1,'기초'],[ST4,'같은 종류의 전하 사이에는 밀어내는 전기력이 작용한다.',1,'기초'],[ST4,'다른 종류의 전하 사이에는 끌어당기는 전기력이 작용한다.',1,'기초'],[ST4,'전자를 잃은 물체는 (+)전하를 띤다.',1,'하'],[ST4,'대전체를 대전되지 않은 물체에 가까이 하면 정전기 유도가 일어난다.',1,'중'],[ST4,'정전기 유도가 일어나면 대전체와 가까운 쪽은 대전체와 다른 종류의 전하로 대전된다.',1,'상'],[ST4,'검전기를 이용하면 물체의 대전 여부를 알 수 있다.',1,'하'],
+[ST4,'마찰 전기는 (+)전하가 이동하여 생긴다.',0,'중','마찰 전기는 (−)전하(전자)가 이동하여 생긴다.'],[ST4,'같은 종류의 전하 사이에는 끌어당기는 힘이 작용한다.',0,'기초','같은 종류의 전하는 서로 밀어낸다.'],[ST4,'전자를 얻은 물체는 (+)전하를 띤다.',0,'하','전자를 얻은 물체는 (−)전하를 띤다.'],[ST4,'정전기 유도가 일어나면 대전체와 먼 쪽이 대전체와 다른 종류의 전하를 띤다.',0,'상','대전체와 가까운 쪽이 다른 종류의 전하를 띤다.'],
+[ST5,'전류의 방향은 전자의 이동 방향과 반대이다.',1,'하'],[ST5,'전류의 세기는 전압에 비례하고 저항에 반비례한다.',1,'하'],[ST5,'저항을 직렬로 연결하면 전체 저항이 커진다.',1,'중'],[ST5,'저항을 병렬로 연결하면 전체 저항이 작아진다.',1,'중'],[ST5,'가정의 전기 기구는 각각 켜고 끌 수 있도록 병렬로 연결한다.',1,'중'],[ST5,'직렬로 연결된 저항에는 같은 세기의 전류가 흐른다.',1,'상'],[ST5,'병렬로 연결된 저항에는 같은 크기의 전압이 걸린다.',1,'상'],[ST5,'부도체는 전류가 잘 흐르지 않는 물질이다.',1,'기초'],
+[ST5,'전류의 방향은 전자의 이동 방향과 같다.',0,'하','전류의 방향은 전자의 이동 방향과 반대이다.'],[ST5,'저항을 병렬로 연결하면 전체 저항이 커진다.',0,'중','병렬로 연결하면 전체 저항은 작아진다.'],[ST5,'가정의 전기 기구는 직렬로 연결한다.',0,'중','가정의 전기 기구는 병렬로 연결한다.'],[ST5,'부도체는 전류가 잘 흐르는 물질이다.',0,'기초','부도체는 전류가 잘 흐르지 않는다.'],[ST5,'전압이 같을 때 저항이 클수록 전류의 세기가 커진다.',0,'하','저항이 클수록 전류의 세기는 작아진다.'],
+[ST6,'전기 에너지는 열, 빛, 소리, 운동, 화학 에너지 등으로 전환된다.',1,'기초'],[ST6,'소비 전력은 1초 동안 전기 기구가 사용하는 전기 에너지의 양이다.',1,'하'],[ST6,'소비 전력의 단위로 W(와트)를 사용한다.',1,'하'],[ST6,'전기다리미는 전기 에너지를 주로 열에너지로 전환한다.',1,'기초'],[ST6,'선풍기는 전기 에너지를 주로 운동 에너지로 전환한다.',1,'기초'],[ST6,'같은 시간 동안 사용할 때 소비 전력이 큰 전기 기구일수록 전기 에너지를 많이 사용한다.',1,'중'],
+[ST6,'소비 전력은 1시간 동안 사용한 전기 에너지의 양이다.',0,'중','소비 전력은 1초 동안 사용하는 전기 에너지의 양이다.'],[ST6,'전기 에너지는 다른 형태의 에너지로 전환될 수 없다.',0,'기초','전기 에너지는 다양한 에너지로 전환된다.'],[ST6,'스피커는 전기 에너지를 주로 빛에너지로 전환한다.',0,'하','스피커는 전기 에너지를 주로 소리 에너지로 전환한다.'],
+[ST7,'코일에 전류가 흐르면 코일 주위에 자기장이 생긴다.',1,'기초'],[ST7,'코일에 흐르는 전류가 셀수록 자기장의 세기가 커진다.',1,'하'],[ST7,'코일 주위의 자기장의 방향은 전류의 방향에 따라 달라진다.',1,'하'],[ST7,'전자석은 자기장의 세기나 방향을 조절할 수 있다.',1,'중'],[ST7,'자기장 안에서 전류가 흐르는 코일이 받는 힘의 방향은 전류의 방향과 자기장의 방향에 모두 수직이다.',1,'상'],[ST7,'전동기는 자기장 안에서 전류가 흐르는 코일이 받는 힘을 이용한 장치이다.',1,'하'],[ST7,'전동기는 코일과 자석으로 이루어져 있다.',1,'중'],[ST7,'선풍기, 세탁기, 드론, 스피커는 자기장 속 코일이 받는 힘을 이용한다.',1,'중'],[ST7,'나침반 자침의 N극이 가리키는 방향이 자기장의 방향이다.',1,'하'],
+[ST7,'자석끼리 서로 밀어내거나 끌어당기는 힘을 자기장이라고 한다.',0,'하','그 힘은 자기력이다.'],[ST7,'코일 주위의 자기장의 방향은 전류의 방향과 관계없다.',0,'중','자기장의 방향은 전류의 방향에 따라 달라진다.'],[ST7,'자기장 안에서 코일이 받는 힘의 방향은 전류의 방향과 나란하다.',0,'상','힘의 방향은 전류의 방향과 수직이다.'],[ST7,'코일의 자기장과 자석의 자기장은 상호작용하지 않는다.',0,'상','두 자기장이 상호작용하여 코일이 힘을 받는다.']].map(a=>({tp:a[0],s:a[1],o:a[2],lv:a[3],fix:a[4]||''}));
+oxGens(SS,SX_ST,x=>x.tp,'z');
+for(const tp of [ST1,ST2,ST3,ST4,ST5,ST6,ST7])G(SS,tp,['중','상'],lv=>{const k=lv==='상'?4:3;const st=R.sample(upTo(SX_ST.filter(x=>x.tp===tp),lv),k);if(st.length<k||!st.some(s=>s.o))return null;return bogiMC(`z-bg-${st.map(s=>s.s).join('|')}`,'&lt;보기&gt;에서 옳은 것만을 있는 대로 고른 것은?',st.map(s=>({s:s.s,ok:!!s.o})),ncS(lv),st.filter(s=>!s.o).map(s=>s.fix).join(' / '));},1.2);
+const ENZ=[['침','아밀레이스','녹말'],['위액','펩신','단백질'],['이자액','아밀레이스','녹말'],['이자액','트립신','단백질'],['이자액','라이페이스','지방']];
+const FINAL=[['녹말','포도당'],['단백질','아미노산'],['지방','지방산과 모노글리세리드']];
+G(SS,ST1,LV4,lv=>{const t=R.ri(1,3);if(t===1){const [l,e,n]=R.pick(ENZ);return mc(`z-enz1-${l}-${e}`,`${l} 속의 소화효소 <b>${e}</b>가 분해하는 영양소는?`,n,['녹말','단백질','지방'].filter(x=>x!==n).concat(['무기염류','바이타민']),ncS(lv));}
+  if(t===2){const [n,f]=R.pick(FINAL);return mc(`z-fin-${n}`,`${n}의 최종 소화 산물은?`,f,FINAL.filter(x=>x[0]!==n).map(x=>x[1]).concat(['엿당','글리코젠']),ncS(lv));}
+  const [l,e,n]=R.pick(ENZ.slice(1));return mc(`z-enz2-${e}`,`<b>${n}</b>을(를) 분해하는 소화효소 중 ${l}에 들어 있는 것은?`,e,['아밀레이스','펩신','트립신','라이페이스'].filter(x=>x!==e).concat(['쓸개즙']),ncS(lv));},1.3);
+const ORG=[['간','쓸개즙을 만든다.'],['쓸개','쓸개즙을 저장한다.'],['이자','이자액을 만들어 작은창자로 보낸다.'],['위','위액을 분비하여 단백질의 소화를 시작한다.'],['작은창자','영양소의 최종 소화와 흡수가 주로 일어난다.'],['큰창자','주로 물이 흡수된다.']];
+G(SS,ST1,LV4,lv=>{const [o,d]=R.pick(ORG);return mc(`z-org-${o}`,`다음 설명에 해당하는 소화 기관은?${box(d)}`,o,ORG.filter(x=>x[0]!==o).map(x=>x[0]),ncS(lv));});
+const HEART=['우심방','우심실','좌심방','좌심실'];
+const PATH={'허파순환':['우심실','폐동맥','폐의 모세혈관','폐정맥','좌심방'],'온몸순환':['좌심실','대동맥','온몸의 모세혈관','대정맥','우심방']};
+G(SS,ST2,['하','중','상'],lv=>{const k=R.pick(Object.keys(PATH));const p=PATH[k];const c=p.join(' → ');const ds=[[...p].reverse().join(' → '),[p[0],p[3],p[2],p[1],p[4]].join(' → '),PATH[k==='허파순환'?'온몸순환':'허파순환'].join(' → '),[p[4],p[1],p[2],p[3],p[0]].join(' → ')];return mc(`z-path-${k}`,`<b>${k}</b>의 경로를 바르게 나타낸 것은?`,c,ds,ncS(lv));},1.2);
+const VES=[['대동맥','좌심실과 연결되어 온몸으로 혈액을 내보낸다.'],['폐동맥','우심실과 연결되어 폐로 혈액을 내보낸다.'],['폐정맥','폐에서 좌심방으로 혈액이 들어온다.'],['대정맥','온몸을 돈 혈액이 우심방으로 들어온다.']];
+G(SS,ST2,['하','중','상'],lv=>{const [v,d]=R.pick(VES);return mc(`z-ves-${v}`,`다음 설명에 해당하는 혈관은?${box(d)}`,v,VES.filter(x=>x[0]!==v).map(x=>x[0]).concat(['모세혈관']),ncS(lv));});
+const BLOOD=[['적혈구','산소를 운반한다.'],['백혈구','몸속에 들어온 세균 등을 제거한다.'],['혈소판','상처가 났을 때 혈액을 응고시킨다.'],['혈장','영양소, 노폐물, 이산화 탄소를 녹여 운반한다.']];
+G(SS,ST2,LV4,lv=>{const [b,d]=R.pick(BLOOD);return mcFixed(`z-bld-${b}`,`다음 기능을 하는 혈액의 성분은?${box(d)}`,BLOOD.map(x=>x[0]),BLOOD.findIndex(x=>x[0]===b));});
+G(SS,ST3,LV4,lv=>{const ins=Math.random()<0.5;const ch=['갈비뼈 올라감, 가로막 내려감','갈비뼈 내려감, 가로막 올라감','갈비뼈 올라감, 가로막 올라감','갈비뼈 내려감, 가로막 내려감'];return mcFixed(`z-br-${ins}`,`<b>${ins?'들숨':'날숨'}</b>일 때 갈비뼈와 가로막의 움직임으로 옳은 것은?`,ch,ins?0:1,ins?'들숨: 흉강 부피 증가, 압력 감소 → 공기 들어옴':'날숨: 흉강 부피 감소, 압력 증가 → 공기 나감');},1.2);
+const URI=[['여과','토리에서 보먼주머니로 크기가 작은 물질이 이동하는 과정'],['재흡수','세뇨관에서 몸에 필요한 물질이 모세혈관으로 다시 흡수되는 과정'],['분비','모세혈관에 남아 있던 노폐물이 세뇨관으로 이동하는 과정']];
+G(SS,ST3,['하','중','상'],lv=>{const [u,d]=R.pick(URI);return mcFixed(`z-uri-${u}`,`오줌이 만들어지는 과정 중 다음 설명에 해당하는 것은?${box(d)}`,['여과','재흡수','분비'],['여과','재흡수','분비'].indexOf(u));},1.2);
+const PARTS6=[['허파꽈리','숨관가지 끝에 연결된 작은 공기주머니로, 기체 교환이 일어난다.'],['콩팥단위','오줌을 만드는 기본 단위로, 토리·보먼주머니·세뇨관으로 이루어진다.'],['방광','콩팥에서 만들어진 오줌을 저장한다.'],['오줌관','콩팥과 방광을 연결하는 관이다.'],['가로막','흉강 아래쪽에 있는 근육으로 된 막이다.'],['융털','작은창자 안쪽 벽에 있는 작은 돌기로 영양소를 흡수한다.']];
+G(SS,ST3,LV4,lv=>{const [p,d]=R.pick(PARTS6);return mc(`z-p6-${p}`,`다음 설명에 해당하는 것은?${box(d)}`,p,PARTS6.filter(x=>x[0]!==p).map(x=>x[0]),ncS(lv));});
+// 정전기
+G(SS,ST4,LV4,lv=>{const lose=Math.random()<0.5;return mcFixed(`z-ch-${lose}`,`마찰 과정에서 전자를 <b>${lose?'잃은':'얻은'}</b> 물체는 어떤 전하를 띠는가?`,['(+)전하','(−)전하','전하를 띠지 않는다'],lose?0:1);});
+G(SS,ST4,['중','상'],lv=>{const s=R.pick(['(+)','(−)']);const o=s==='(+)'?'(−)':'(+)';return mcF0(`z-ind-${s}`,`${s}전하로 대전된 막대를 대전되지 않은 금속 막대의 한쪽 끝에 가까이 할 때, 대전체와 <b>가까운 쪽</b>과 <b>먼 쪽</b>에 유도되는 전하를 차례로 나타낸 것은?`,[`${o}전하, ${s}전하`,`${s}전하, ${o}전하`,`${o}전하, ${o}전하`,`${s}전하, ${s}전하`],0,'가까운 쪽은 대전체와 다른 종류, 먼 쪽은 같은 종류의 전하');});
+// 전류·전압·저항 계산
+G(SS,ST5,LV4,lv=>{const I=R.ri(1,5),Rr=R.ri(2,12),V=I*Rr,t=R.ri(1,3);
+  if(t===1)return sa(`z-o1-${I}-${Rr}`,`저항이 ${Rr} Ω인 전열선에 ${I} A의 전류가 흐를 때, 전열선에 걸린 전압은 몇 V인가?`,`${V} V`,'V = I × R');
+  if(t===2)return sa(`z-o2-${V}-${I}`,`어떤 전열선에 ${V} V의 전압을 걸었더니 ${I} A의 전류가 흘렀다. 이 전열선의 저항은 몇 Ω인가?`,`${Rr} Ω`,'R = V ÷ I');
+  return sa(`z-o3-${V}-${Rr}`,`${Rr} Ω인 전열선에 ${V} V의 전압을 걸면 흐르는 전류의 세기는 몇 A인가?`,`${I} A`,'I = V ÷ R');},1.4);
+G(SS,ST5,['중','상'],lv=>{if(Math.random()<0.5){const a=R.ri(2,10),b=R.ri(2,10),I=R.ri(1,3);return sa(`z-ser-${a}-${b}-${I}`,`${a} Ω과 ${b} Ω인 두 저항을 직렬로 연결하고 전원 장치에 연결하였더니 회로에 ${I} A의 전류가 흘렀다. 전원 장치의 전압은 몇 V인가?`,`${(a+b)*I} V`,`전체 저항 = ${a} + ${b} = ${a+b} Ω`);}
+  const p=R.pick([[3,6,2],[6,12,4],[4,4,2],[6,6,3],[10,10,5],[12,6,4],[2,2,1],[8,8,4]]);const V=p[2]*R.ri(1,4);return sa(`z-par-${p[0]}-${p[1]}-${V}`,`${p[0]} Ω과 ${p[1]} Ω인 두 저항을 병렬로 연결하고 ${V} V의 전원 장치에 연결하였다. 회로 전체에 흐르는 전류의 세기는 몇 A인가?`,`${V/p[0]+V/p[1]} A`,'병렬연결: 각 저항에 같은 전압이 걸린다.');},1.2);
+// 전기 에너지
+const CONV=[['전기다리미','열에너지'],['전기난로','열에너지'],['전등','빛에너지'],['스피커','소리 에너지'],['선풍기','운동 에너지'],['세탁기','운동 에너지'],['휴대 전화 충전','화학 에너지']];
+G(SS,ST6,LV4,lv=>{const [d,e]=R.pick(CONV);return mc(`z-cv-${d}`,`<b>${d}</b>에서 전기 에너지가 주로 전환되는 에너지는?`,e,['열에너지','빛에너지','소리 에너지','운동 에너지','화학 에너지'].filter(x=>x!==e),ncS(lv));});
+G(SS,ST6,['하','중','상'],lv=>{const W=R.pick([20,40,60,100,500,800,1000,1200]),h=R.ri(1,5);if(Math.random()<0.5||lv==='하'){const s=R.pick([10,30,60]);return sa(`z-pw1-${W}-${s}`,`소비 전력이 ${W} W인 전기 기구를 ${s}초 동안 사용했을 때 사용한 전기 에너지는 몇 J인가?`,`${W*s} J`,'전기 에너지(J) = 소비 전력(W) × 시간(s)');}
+  return sa(`z-pw2-${W}-${h}`,`소비 전력이 ${W} W인 전기 기구를 하루에 ${h}시간씩 사용할 때, 하루 동안의 전력량은 몇 Wh인가?`,`${W*h} Wh`,'전력량(Wh) = 소비 전력(W) × 시간(h)');},1.2);
+// 전류와 자기장
+const MAGA=[['세탁기'],['선풍기'],['드론'],['스피커'],['전기 자동차의 전동기']];
+G(SS,ST7,LV4,lv=>{const c=R.pick(MAGA)[0];return mc(`z-mot-${c}`,'다음 중 자기장 안에서 전류가 흐르는 코일이 받는 힘을 이용한 예는?',c,['전기다리미','전구','전기난로','건전지','형광펜'],ncS(lv));});
+G(SS,ST7,['하','중','상'],lv=>{const t=R.ri(1,3);if(t===1)return mcF0('z-mag1','코일 주위의 자기장을 더 세게 하는 방법으로 옳은 것은?',['코일에 흐르는 전류의 세기를 크게 한다.','코일에 흐르는 전류의 방향을 바꾼다.','코일에 흐르는 전류의 세기를 작게 한다.','전원을 끈다.'],0);
+  if(t===2)return mcF0('z-mag2','자기장 안에서 전류가 흐르는 코일이 받는 힘의 방향을 반대로 바꾸는 방법은?',['전류의 방향을 반대로 바꾼다.','전류의 세기를 크게 한다.','코일을 더 오래 연결한다.','자석을 더 가까이 둔다.'],0,'전류의 방향이나 자기장의 방향 중 하나를 바꾸면 힘의 방향이 반대가 된다.');
+  return mcF0('z-mag3','전동기가 회전하는 원리로 옳은 것은?',['코일에 전류가 흐를 때 생기는 자기장과 자석의 자기장이 상호작용한다.','코일이 전기 에너지를 열에너지로 바꾼다.','자석이 전류를 만들어 코일에 보낸다.','마찰에 의해 전자가 이동한다.'],0);});
+EXAM_TOPICS['과학']=[ST1,ST2,ST3,ST4,ST5,ST6,ST7];EXAM_LABEL['과학']='천재 과학2 Ⅵ·Ⅶ';
+Object.assign(KW['과학'],{[ST1]:'소화|영양소|효소|생명|시험',[ST2]:'순환|심장|혈액|혈관|생명|시험',[ST3]:'호흡|배설|오줌|콩팥|폐|생명|시험',[ST4]:'정전기|대전|전하|전기|시험',[ST5]:'전류|전압|저항|옴|전기|계산|시험',[ST6]:'전기 에너지|전력|에너지|시험',[ST7]:'자기|전동기|코일|자석|시험'});
+/* ===================== 역사 시험 범위: 비상 역사① 5-1 ~ 6-2 ===================== */
+const HT1='시민 혁명과 국민 국가',HT2='산업 혁명과 제국주의',HT3='아시아·아프리카의 근대화 운동',HT4='세계 대전과 민족 운동',HT5='전쟁 이후 인권과 평화',HT6='근현대 연표';
+const ncH=lv=>[3,4,5,5][LV4.indexOf(lv)];
+// [사건, 나라/지역, 연도, 인물, 단원, 수준]
+const HX=[
+['명예혁명이 일어남','영국',1688,'',HT1,'하'],['권리 장전이 승인됨','영국',1689,'',HT1,'중'],['보스턴 차 사건이 일어남','미국',1773,'',HT1,'중'],['독립 선언서를 발표함','미국',1776,'',HT1,'기초'],['삼부회가 소집됨','프랑스',1789,'',HT1,'중'],['바스티유 감옥을 습격함','프랑스',1789,'',HT1,'하'],['인권 선언을 발표함','프랑스',1789,'',HT1,'하'],['나폴레옹이 황제에 즉위함','프랑스',1804,'나폴레옹',HT1,'기초'],['빈 회의가 열림','유럽',1815,'',HT1,'중'],['7월 혁명이 일어남','프랑스',1830,'',HT1,'상'],['2월 혁명이 일어남','프랑스',1848,'',HT1,'상'],['남북 전쟁이 일어남','미국',1861,'링컨',HT1,'하'],['노예 해방을 선언함','미국',1863,'링컨',HT1,'하'],['독일 제국이 수립됨','독일',1871,'비스마르크',HT1,'중'],['라틴 아메리카 최초로 독립함','아이티',1804,'',HT1,'상'],['먼로 선언을 발표함','미국',1823,'',HT1,'상'],
+['증기 기관을 개량함','영국',null,'와트',HT2,'기초'],['증기 기관차를 제작함','영국',null,'스티븐슨',HT2,'하'],['증기선을 만듦','미국',null,'풀턴',HT2,'하'],['기계를 파괴하는 러다이트 운동이 일어남','영국',null,'',HT2,'중'],['파쇼다 사건이 일어남','아프리카',1898,'',HT2,'상'],
+['제1차 아편 전쟁이 일어남','청',1840,'',HT3,'하'],['난징 조약을 체결함','청',1842,'',HT3,'중'],['태평천국 운동이 일어남','청',1851,'홍슈취안',HT3,'중'],['세포이의 항쟁이 일어남','인도',1857,'',HT3,'하'],['메이지 유신이 시작됨','일본',1868,'',HT3,'하'],['인도 국민 회의가 결성됨','인도',1885,'',HT3,'상'],['변법자강 운동이 일어남','청',1898,'캉유웨이',HT3,'상'],['의화단 운동이 일어남','청',1899,'',HT3,'중'],['신해혁명이 일어남','청',1911,'쑨원',HT3,'하'],['중화민국이 수립됨','중국',1912,'쑨원',HT3,'중'],
+['사라예보 사건이 일어남','유럽',1914,'',HT4,'중'],['제1차 세계 대전이 일어남','유럽',1914,'',HT4,'기초'],['러시아 혁명이 일어남','러시아',1917,'레닌',HT4,'하'],['베르사유 조약을 체결함','유럽',1919,'',HT4,'중'],['5·4 운동이 일어남','중국',1919,'',HT4,'중'],['국제 연맹이 창설됨','국제',1920,'',HT4,'하'],['튀르키예 공화국이 수립됨','튀르키예',1923,'무스타파 케말',HT4,'상'],['대공황이 시작됨','미국',1929,'',HT4,'하'],['제2차 세계 대전이 일어남','유럽',1939,'',HT4,'기초'],['일본이 진주만을 기습함','태평양',1941,'',HT4,'중'],['노르망디 상륙 작전을 펼침','유럽',1944,'',HT4,'상'],
+['난징 대학살이 일어남','중국',1937,'',HT5,'중'],['국제 연합(UN)이 창설됨','국제',1945,'',HT5,'기초'],['세계 인권 선언이 채택됨','국제',1948,'',HT5,'하']].map(a=>({n:a[0],c:a[1],y:a[2],p:a[3],tp:a[4],lv:a[5]}));
+const HP=[['나폴레옹','유럽 여러 나라를 정복하고 법전을 편찬하여 프랑스 혁명의 이념을 전파하였다.',HT1],['링컨','남북 전쟁 중 노예 해방을 선언하였다.',HT1],['비스마르크','철혈 정책을 내세워 독일 통일을 이끌었다.',HT1],['가리발디','붉은 셔츠단을 이끌고 남부 이탈리아를 점령하여 통일에 기여하였다.',HT1],['볼리바르','라틴 아메리카 여러 나라의 독립 운동을 이끌었다.',HT1],['와트','증기 기관을 개량하여 산업 혁명에 큰 영향을 주었다.',HT2],['스티븐슨','증기 기관차를 제작하였다.',HT2],['마르크스','자본주의를 비판하고 사회주의 사상을 체계화하였다.',HT2],['홍슈취안','태평천국을 세우고 토지의 균등한 분배를 주장하였다.',HT3],['캉유웨이','입헌 군주제를 목표로 변법자강 운동을 이끌었다.',HT3],['쑨원','삼민주의를 내세우고 신해혁명을 이끌었다.',HT3],['레닌','볼셰비키를 이끌고 러시아 혁명을 일으켰다.',HT4],['윌슨','민족 자결주의를 제창하였다.',HT4],['간디','비폭력·불복종 운동으로 인도의 독립을 위해 노력하였다.',HT4],['무스타파 케말','튀르키예 공화국을 세우고 근대화 개혁을 추진하였다.',HT4],['무솔리니','이탈리아에서 파시즘 체제를 세웠다.',HT4],['히틀러','독일에서 나치당을 이끌고 전체주의 체제를 세웠다.',HT4]];
+const HTERM=[['권리 장전','명예혁명 후 의회가 승인한 문서로, 의회의 동의 없이 법을 만들거나 세금을 거둘 수 없게 하였다.',HT1,'중'],['인권 선언','프랑스 혁명 때 인간의 자유와 평등, 국민 주권 등을 선언한 문서',HT1,'하'],['빈 체제','나폴레옹 몰락 후 유럽을 혁명 이전 상태로 되돌리려 한 보수적 국제 질서',HT1,'중'],['차티스트 운동','영국에서 노동자들이 선거권을 요구하며 벌인 운동',HT1,'상'],['크리오요','라틴 아메리카에서 태어난 에스파냐인의 후손',HT1,'상'],
+['인클로저 운동','영국의 지주들이 공동 경작지 등에 울타리를 쳐 목장 등으로 만든 일',HT2,'상'],['산업 혁명','18세기 후반 영국에서 시작된 기계 사용과 생산 방식의 큰 변화',HT2,'기초'],['러다이트 운동','실업과 낮은 임금에 시달린 노동자들이 기계를 파괴한 운동',HT2,'중'],['사회주의','생산 수단의 공동 소유를 통해 평등한 사회를 이루려는 사상',HT2,'중'],['제국주의','강대국이 군사력을 앞세워 다른 나라나 지역을 식민지로 삼으려 한 정책',HT2,'하'],['사회 진화론','생물 진화론을 사회에 적용하여 강한 민족이 약한 민족을 지배하는 것을 정당화한 이론',HT2,'상'],
+['양무 운동','중국의 전통은 지키면서 서양의 기술을 받아들이자는 중체서용의 근대화 운동',HT3,'중'],['변법자강 운동','일본의 메이지 유신을 본받아 입헌 군주제를 세우려 한 개혁 운동',HT3,'상'],['의화단 운동','‘부청멸양’을 내세워 외세를 몰아내려 한 운동',HT3,'중'],['삼민주의','쑨원이 내세운 민족·민권·민생주의',HT3,'중'],['메이지 유신','일본에서 천황 중심의 근대 국가를 세우려 한 개혁',HT3,'하'],['세포이의 항쟁','영국 동인도 회사의 인도인 용병들이 일으킨 반영 항쟁',HT3,'중'],['탄지마트','오스만 제국이 서양식 제도를 도입하여 추진한 근대화 개혁',HT3,'상'],
+['총력전','국가의 모든 인적·물적 자원을 전쟁에 동원하는 전쟁',HT4,'중'],['민족 자결주의','각 민족이 자신의 정치적 운명을 스스로 결정해야 한다는 원칙',HT4,'하'],['뉴딜 정책','대공황을 극복하기 위해 미국 정부가 경제에 적극적으로 개입한 정책',HT4,'중'],['전체주의','개인보다 국가와 민족을 앞세워 개인의 자유를 억압하는 체제',HT4,'중'],
+['홀로코스트','나치 독일이 유대인 등을 대량 학살한 사건',HT5,'하'],['뉘른베르크 재판','제2차 세계 대전 후 독일의 전쟁 범죄자를 처벌한 재판',HT5,'중'],['도쿄 재판','제2차 세계 대전 후 일본의 전쟁 범죄자를 처벌한 재판',HT5,'중'],['세계 인권 선언','1948년 국제 연합 총회에서 채택된, 모든 인간의 기본적 권리를 밝힌 선언',HT5,'하'],['국제 연합','제2차 세계 대전 후 국제 평화와 안전을 지키기 위해 만든 국제기구',HT5,'기초']].map(a=>({t:a[0],d:a[1],tp:a[2],lv:a[3]}));
+const HSTMT=[
+[HT1,'영국의 명예혁명 이후 권리 장전이 승인되어 입헌 군주제의 기틀이 마련되었다.',1,'하'],[HT1,'미국은 독립 후 연방제와 삼권 분립을 바탕으로 한 헌법을 만들었다.',1,'중'],[HT1,'프랑스 혁명 때 발표된 인권 선언은 자유와 평등, 국민 주권을 담고 있다.',1,'하'],[HT1,'빈 체제는 자유주의와 민족주의를 억누르려 한 보수적 체제였다.',1,'중'],[HT1,'미국 남북 전쟁 중 링컨은 노예 해방을 선언하였다.',1,'기초'],[HT1,'아이티는 라틴 아메리카에서 가장 먼저 독립하였다.',1,'상'],[HT1,'독일은 비스마르크의 철혈 정책으로 통일을 이루었다.',1,'중'],
+[HT1,'명예혁명은 프랑스에서 일어났다.',0,'기초','명예혁명은 영국에서 일어났다.'],[HT1,'보스턴 차 사건은 프랑스 혁명의 계기가 되었다.',0,'중','보스턴 차 사건은 미국 독립 혁명의 계기가 되었다.'],[HT1,'빈 체제는 프랑스 혁명의 이념을 널리 퍼뜨리려 하였다.',0,'중','빈 체제는 혁명 이전으로 되돌리려 한 보수 체제였다.'],[HT1,'남북 전쟁에서 남부가 승리하였다.',0,'하','남북 전쟁에서 북부가 승리하였다.'],
+[HT2,'산업 혁명은 18세기 후반 영국에서 시작되었다.',1,'기초'],[HT2,'영국은 석탄과 철이 풍부하고 넓은 식민지 시장을 가지고 있었다.',1,'하'],[HT2,'산업 혁명은 면직물 공업에서 시작되었다.',1,'중'],[HT2,'산업 혁명 이후 자본가와 노동자 사이의 갈등이 커졌다.',1,'하'],[HT2,'제국주의 국가들은 사회 진화론과 인종주의로 침략을 정당화하였다.',1,'중'],[HT2,'아프리카에서 에티오피아와 라이베리아는 독립을 유지하였다.',1,'상'],[HT2,'영국의 종단 정책과 프랑스의 횡단 정책이 부딪쳐 파쇼다 사건이 일어났다.',1,'상'],
+[HT2,'산업 혁명은 미국에서 처음 시작되었다.',0,'기초','산업 혁명은 영국에서 시작되었다.'],[HT2,'러다이트 운동은 노동자들이 선거권을 요구한 운동이다.',0,'중','러다이트 운동은 기계 파괴 운동이다.'],[HT2,'제국주의 시기에 아프리카의 모든 나라가 독립을 유지하였다.',0,'하','에티오피아와 라이베리아를 제외한 대부분이 식민지가 되었다.'],
+[HT3,'청은 제1차 아편 전쟁에서 패하여 난징 조약을 맺었다.',1,'하'],[HT3,'난징 조약으로 청은 홍콩을 영국에 넘겨주었다.',1,'중'],[HT3,'양무 운동은 중국의 전통을 지키며 서양 기술을 받아들이려 하였다.',1,'중'],[HT3,'신해혁명으로 청이 무너지고 중화민국이 세워졌다.',1,'하'],[HT3,'일본은 메이지 유신으로 근대 국가 체제를 갖추었다.',1,'하'],[HT3,'세포이의 항쟁 이후 영국은 인도를 직접 지배하였다.',1,'중'],[HT3,'동남아시아에서 타이는 독립을 유지하였다.',1,'상'],
+[HT3,'태평천국 운동은 외세를 몰아내기 위해 ‘부청멸양’을 내세웠다.',0,'상','‘부청멸양’은 의화단 운동의 구호이다.'],[HT3,'변법자강 운동은 공화정 수립을 목표로 하였다.',0,'상','변법자강 운동은 입헌 군주제를 목표로 하였다.'],[HT3,'메이지 유신은 중국에서 일어난 개혁이다.',0,'기초','메이지 유신은 일본의 개혁이다.'],[HT3,'세포이의 항쟁은 일본에 맞선 항쟁이다.',0,'하','세포이의 항쟁은 영국에 맞선 항쟁이다.'],
+[HT4,'사라예보 사건을 계기로 제1차 세계 대전이 일어났다.',1,'하'],[HT4,'제1차 세계 대전은 국가의 모든 자원을 동원한 총력전이었다.',1,'중'],[HT4,'러시아 혁명으로 세계 최초의 사회주의 국가가 탄생하였다.',1,'중'],[HT4,'제1차 세계 대전 후 국제 평화를 위해 국제 연맹이 만들어졌다.',1,'하'],[HT4,'대공황을 극복하기 위해 미국은 뉴딜 정책을 실시하였다.',1,'중'],[HT4,'독일의 폴란드 침공으로 제2차 세계 대전이 시작되었다.',1,'하'],[HT4,'인도의 간디는 비폭력·불복종 운동을 펼쳤다.',1,'하'],
+[HT4,'국제 연맹은 제2차 세계 대전 후에 만들어졌다.',0,'중','국제 연맹은 제1차 세계 대전 후 만들어졌다.'],[HT4,'러시아 혁명은 히틀러가 이끌었다.',0,'기초','러시아 혁명은 레닌이 이끌었다.'],[HT4,'대공황은 1929년 영국에서 시작되었다.',0,'중','대공황은 미국에서 시작되었다.'],[HT4,'일본의 진주만 기습으로 제1차 세계 대전이 시작되었다.',0,'하','진주만 기습으로 태평양 전쟁이 시작되었다.'],
+[HT5,'나치 독일은 유대인 등을 대량 학살하였다(홀로코스트).',1,'기초'],[HT5,'일본군은 난징에서 많은 민간인을 학살하였다.',1,'하'],[HT5,'일본은 식민지와 점령지 사람들을 강제로 동원하였다.',1,'하'],[HT5,'전쟁 범죄자를 처벌하기 위해 뉘른베르크 재판과 도쿄 재판이 열렸다.',1,'중'],[HT5,'1948년 국제 연합에서 세계 인권 선언이 채택되었다.',1,'중'],[HT5,'국제 연합은 국제 평화와 안전을 지키기 위해 만들어졌다.',1,'기초'],
+[HT5,'국제 연합은 제1차 세계 대전 직후 만들어졌다.',0,'하','국제 연합은 제2차 세계 대전 후 1945년에 만들어졌다.'],[HT5,'도쿄 재판은 독일의 전쟁 범죄자를 처벌한 재판이다.',0,'중','도쿄 재판은 일본의 전쟁 범죄자를 처벌하였다.'],[HT5,'세계 인권 선언은 1919년에 채택되었다.',0,'중','세계 인권 선언은 1948년에 채택되었다.']].map(a=>({tp:a[0],s:a[1],o:a[2],lv:a[3],fix:a[4]||''}));
+oxGens(HS,HSTMT,x=>x.tp,'w');
+for(const tp of [HT1,HT2,HT3,HT4,HT5]){
+  G(HS,tp,['중','상'],lv=>{const k=lv==='상'?4:3;const st=R.sample(upTo(HSTMT.filter(x=>x.tp===tp),lv),k);if(st.length<k||!st.some(s=>s.o))return null;return bogiMC(`w-bg-${st.map(s=>s.s).join('|')}`,'&lt;보기&gt;에서 옳은 것만을 있는 대로 고른 것은?',st.map(s=>({s:s.s,ok:!!s.o})),ncH(lv),st.filter(s=>!s.o).map(s=>s.fix).join(' / '));},1.1);
+  G(HS,tp,LV4,lv=>{const x=pickLv(HTERM,lv,y=>y.tp===tp);if(!x)return null;return mc(`w-tm-${x.t}`,`다음 설명에 해당하는 것은?${box(x.d)}`,x.t,HTERM.filter(y=>y!==x).map(y=>y.t),ncH(lv));},1.3);
+  G(HS,tp,LV4,lv=>{const ps=HP.filter(p=>p[2]===tp);if(!ps.length)return null;const [p,d]=R.pick(ps);return mc(`w-ps-${p}`,`다음 활동을 한 인물은?${box(d)}`,p,HP.filter(x=>x[0]!==p).map(x=>x[0]),ncH(lv));},1.1);
+  G(HS,tp,LV4,lv=>{const x=pickLv(HX,lv,y=>y.tp===tp);if(!x)return null;const cs=uniq(HX.map(y=>y.c)).filter(c=>c!==x.c&&!['국제','유럽','태평양','아프리카'].includes(c));if(['국제','유럽','태평양','아프리카'].includes(x.c))return null;return mc(`w-ct-${x.n}`,`다음 일이 일어난 나라는?${box(x.n)}`,x.c,cs,ncH(lv));});
+}
+G(HS,HT6,['하','중','상'],lv=>{const pool=upTo(HX,lv,1).filter(y=>y.y!=null);const k=ncH(lv);const pick=[];const ys=new Set();for(const y of R.shuffle(pool)){if(ys.has(y.y))continue;ys.add(y.y);pick.push(y);if(pick.length===k)break;}if(pick.length<3)return null;
+  const first=Math.random()<0.5;const c=pick.reduce((a,b)=>first?(b.y<a.y?b:a):(b.y>a.y?b:a));const opts=R.shuffle(pick).map(o=>`${o.c==='국제'?'':o.c+': '}${o.n}`);const cs=`${c.c==='국제'?'':c.c+': '}${c.n}`;
+  return mcFixed(`w-chr-${first}-${pick.map(p=>p.n).sort().join('/')}`,`다음 중 가장 ${first?'먼저':'나중에'} 일어난 일은?`,opts,opts.indexOf(cs),pick.slice().sort((a,b)=>a.y-b.y).map(o=>`${o.n}(${o.y})`).join(' → '));},1.5);
+G(HS,HT6,LV4,lv=>{const x=pickLv(HX,lv,y=>y.y!=null);if(!x)return null;const ds=uniq(HX.filter(y=>y.y!=null&&Math.abs(y.y-x.y)>=5).map(y=>`${y.y}년`));return mc(`w-yr-${x.n}`,`다음 일이 일어난 해는?${box(`${x.c==='국제'?'':x.c+': '}${x.n}`)}`,`${x.y}년`,ds,ncH(lv));});
+EXAM_TOPICS['역사']=[HT1,HT2,HT3,HT4,HT5,HT6];EXAM_LABEL['역사']='비상 역사① 5-1~6-2';
+Object.assign(KW['역사'],{[HT1]:'시민 혁명|프랑스 혁명|미국 독립|국민 국가|세계사|시험',[HT2]:'산업 혁명|제국주의|세계사|시험',[HT3]:'아시아|중국|청|일본|인도|근대화|세계사|시험',[HT4]:'세계 대전|대공황|전체주의|민족 운동|세계사|시험',[HT5]:'인권|평화|국제 연합|세계사|시험',[HT6]:'순서|흐름|연도|연표|시기|시험'});
+
+</script>
+<script>
+/* ===================== 화면 ===================== */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const strip=s=>String(s).replace(/<[^>]+>/g,'');
+const STORE='basic-skills-tool-v1';
+let state={students:[],selId:null};
+let storageOK=true;
+const PH={'국어':'예) 맞춤법을 자주 틀림, 글의 중심 내용 파악이 어려움','영어':'예) 단어를 잘 못 외움, be동사·과거형이 헷갈림','수학':'예) 분수 계산 실수가 많음, 문장제를 어려워함','과학':'예) 상태 변화 용어를 헷갈림, 속력 계산이 어려움','역사':'예) 시대 순서를 헷갈림, 조선 시대 인물을 잘 모름'};
+const defLv=sub=>SUBJECTS[sub]===LV4?'하':'중2 하';
+
+function load(){try{const s=localStorage.getItem(STORE);if(s){const o=JSON.parse(s);if(o&&Array.isArray(o.students))state=o;}}catch(e){storageOK=false;}}
+function save(){try{localStorage.setItem(STORE,JSON.stringify(state));}catch(e){storageOK=false;}
+  $('storeMsg').innerHTML=storageOK?'입력한 내용은 이 브라우저에 자동 저장돼요. 다른 컴퓨터에서 쓰려면 백업 파일을 저장하세요.':'<b style="color:#b42318">이 환경에서는 자동 저장이 되지 않아요.</b> 작업이 끝나면 꼭 ‘백업 파일 저장’을 눌러 주세요.';}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function newStudent(no,name){const subjects={};SUB_LIST.forEach(s=>subjects[s]={level:defLv(s),note:''});return {id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),no:no||'',name:name||'',subjects,history:{}};}
+const cur=()=>state.students.find(s=>s.id===state.selId)||null;
+const stuLabel=s=>s?`${s.no?s.no+'번 ':''}${s.name}`:'';
+const histOf=(s,key)=>new Set((s&&s.history[key])||[]);
+
+/* ---------- 학생 목록 ---------- */
+function renderStudents(){
+  const ul=$('stuList');state.students.sort((a,b)=>(+a.no||999)-(+b.no||999));
+  ul.innerHTML=state.students.length?state.students.map(s=>{const n=SUB_LIST.reduce((t,k)=>t+((s.history[k]||[]).length),0);
+    return `<li data-id="${s.id}" class="${s.id===state.selId?'on':''}"><span>${esc(stuLabel(s))}<br><span class="cnt">출제 기록 ${n}문항</span></span><button class="sm danger" data-del="${s.id}" title="삭제">×</button></li>`;}).join(''):'<li class="muted" style="cursor:default">아직 학생이 없어요.</li>';
+  renderBatchStu();
+}
+$('stuList').onclick=e=>{const d=e.target.closest('[data-del]');if(d){const s=state.students.find(x=>x.id===d.dataset.del);if(s&&confirm(`${stuLabel(s)} 학생을 삭제할까요? 출제 기록도 함께 지워져요.`)){state.students=state.students.filter(x=>x!==s);if(state.selId===s.id)state.selId=null;save();renderAll();}return;}
+  const li=e.target.closest('li[data-id]');if(li){state.selId=li.dataset.id;save();renderAll();}};
+$('addStu').onclick=()=>{const name=$('newName').value.trim(),no=$('newNo').value.trim();if(!name&&!no){toast('번호나 이름을 입력하세요.');return;}
+  const s=newStudent(no,name||`학생${no}`);state.students.push(s);state.selId=s.id;$('newName').value='';$('newNo').value=no?String(+no+1):'';save();renderAll();};
+$('newName').onkeydown=e=>{if(e.key==='Enter')$('addStu').click();};
+$('bulkAdd').onclick=()=>{const lines=$('bulkNames').value.split('\n').map(x=>x.trim()).filter(Boolean);if(!lines.length)return;
+  lines.forEach(l=>{const m=l.match(/^(\d+)[\s.,)번]*\s*(.*)$/);const no=m?m[1]:'',name=m?(m[2]||`학생${m[1]}`):l;state.students.push(newStudent(no,name));});
+  $('bulkNames').value='';if(!state.selId&&state.students[0])state.selId=state.students[0].id;save();renderAll();toast(`${lines.length}명을 추가했어요.`);};
+
+/* ---------- 학생 상세 ---------- */
+function renderStuPanel(){
+  const s=cur(),p=$('stuPanel');
+  if(!s){p.innerHTML='<h2>학생 정보</h2><p class="muted" style="margin:0">왼쪽에서 학생을 추가하거나 선택하세요. 학생을 고르지 않아도 문제지는 만들 수 있지만, 출제 기록은 남지 않아요.</p>';return;}
+  p.innerHTML=`<h2>${esc(stuLabel(s))} <small>과목별 수준과 특징</small></h2>
+  <div class="row" style="margin-bottom:6px"><span class="muted">번호</span><input type="number" id="edNo" value="${esc(s.no)}" style="width:70px"><span class="muted">이름</span><input type="text" id="edName" value="${esc(s.name)}" style="width:160px"></div>
+  <table class="subj-table"><thead><tr><th>과목</th><th style="width:130px">수준</th><th>학생 특징 (어려워하는 부분)</th><th style="width:150px">출제 기록</th></tr></thead><tbody>
+  ${SUB_LIST.map(sub=>{const o=s.subjects[sub];const m=matchTopics(sub,o.level,o.note);const h=(s.history[sub]||[]).length,hv=(s.history['영어단어']||[]).length;
+    return `<tr><td class="sname">${sub}</td><td><select data-lv="${sub}">${SUBJECTS[sub].map(l=>`<option ${l===o.level?'selected':''}>${l}</option>`).join('')}</select></td>
+    <td><textarea data-note="${sub}" rows="2" placeholder="${PH[sub]}">${esc(o.note)}</textarea><div class="chips" id="m-${sub}">${chipsFor(sub,o.level,o.note)}</div></td>
+    <td class="muted">${h}문항${sub==='영어'?`<br>단어 ${hv}개`:''}<br><button class="sm" data-reset="${sub}" style="margin-top:4px">기록 지우기</button></td></tr>`;}).join('')}
+  </tbody></table>`;
+}
+function chipsFor(sub,lv,note){const m=matchTopics(sub,lv,note);if(!note.trim())return '<span class="muted">특징을 적으면 맞는 출제 주제를 추천해요.</span>';
+  return m.length?'<span class="muted">추천 주제:</span> '+m.map(t=>`<span class="chip ok">${t}</span>`).join(''):'<span class="muted">이 수준에서 딱 맞는 주제를 찾지 못했어요. 전체 주제로 출제해요.</span>';}
+$('stuPanel').addEventListener('input',e=>{const s=cur();if(!s)return;const t=e.target;
+  if(t.dataset.note){const sub=t.dataset.note;s.subjects[sub].note=t.value;$('m-'+sub).innerHTML=chipsFor(sub,s.subjects[sub].level,t.value);save();if(sub===G_.sub)autoTopics();}
+  if(t.id==='edName'){s.name=t.value;save();renderStudents();renderGenFor();}
+  if(t.id==='edNo'){s.no=t.value;save();renderStudents();renderGenFor();}});
+$('stuPanel').addEventListener('change',e=>{const s=cur();if(!s)return;const t=e.target;
+  if(t.dataset.lv){const sub=t.dataset.lv;s.subjects[sub].level=t.value;save();$('m-'+sub).innerHTML=chipsFor(sub,t.value,s.subjects[sub].note);if(sub===G_.sub){G_.lv=t.value;renderGen();autoTopics();}}});
+$('stuPanel').addEventListener('click',e=>{const b=e.target.closest('[data-reset]');if(!b)return;const s=cur();const sub=b.dataset.reset;
+  if(confirm(`${stuLabel(s)} 학생의 ${sub} 출제 기록을 지울까요? 지우면 이전 문제가 다시 나올 수 있어요.`)){delete s.history[sub];if(sub==='영어')delete s.history['영어단어'];save();renderAll();toast('출제 기록을 지웠어요.');}});
+
+/* ---------- 문제지 설정 ---------- */
+const G_={sub:'수학',lv:'중2 하',topics:new Set(),kind:'quiz'};
+function renderGenFor(){const s=cur();$('genFor').textContent=s?`· ${stuLabel(s)}`:'· 학생 미지정 (출제 기록 없음)';}
+function renderGen(){
+  renderGenFor();
+  $('subBtns').innerHTML=SUB_LIST.map(x=>`<button class="${x===G_.sub?'pri':''}" data-sub="${x}">${x}</button>`).join('');
+  const levels=SUBJECTS[G_.sub];if(!levels.includes(G_.lv))G_.lv=levels[1];
+  $('lvSel').innerHTML=levels.map(l=>`<option ${l===G_.lv?'selected':''}>${l}</option>`).join('');
+  const s=cur();$('lvHint').textContent=s?(s.subjects[G_.sub].level===G_.lv?'학생 수준으로 설정됨':`학생 수준은 ${s.subjects[G_.sub].level}`):'';
+  const eng=G_.sub==='영어';$('kindLbl').style.display=$('kindRow').style.display=eng?'':'none';
+  if(!eng)G_.kind='quiz';document.querySelectorAll('input[name=kind]').forEach(r=>r.checked=r.value===G_.kind);
+  const voc=G_.kind==='vocab';$('vtestLbl').style.display=voc?'':'none';
+  ['topicLbl','cntLbl'].forEach(i=>$(i).style.visibility=voc?'hidden':'');$('topicBox').parentElement.style.display=voc?'none':'';$('cntRow').style.display=voc?'none':'';
+  const hasEx=!!EXAM_TOPICS[G_.sub];$('examTopic').style.display=$('baseTopic').style.display=hasEx?'':'none';if(hasEx)$('examTopic').textContent=`시험 범위만: ${EXAM_LABEL[G_.sub]}`;
+  renderTopics();
+}
+function renderTopics(){const av=topicsFor(G_.sub,G_.lv);[...G_.topics].forEach(t=>{if(!av.includes(t))G_.topics.delete(t);});if(!G_.topics.size)av.forEach(t=>G_.topics.add(t));
+  const ex=EXAM_TOPICS[G_.sub]||[];$('topicBox').innerHTML=av.map(t=>`<label class="${G_.topics.has(t)?'on':''}${ex.includes(t)?' exam':''}"><input type="checkbox" data-t="${esc(t)}" ${G_.topics.has(t)?'checked':''}>${ex.includes(t)?'📝 ':''}${esc(t)}</label>`).join('');}
+function autoTopics(){const s=cur();const av=topicsFor(G_.sub,G_.lv);const note=s?s.subjects[G_.sub].note:'';const m=matchTopics(G_.sub,G_.lv,note);
+  G_.topics=new Set(m.length?m:av);renderTopics();$('topicMsg').textContent=m.length?`학생 특징에 맞춰 ${m.length}개 주제를 골랐어요.`:(note.trim()?'맞는 주제를 찾지 못해 전체 주제를 골랐어요.':'');}
+function syncFromStudent(){const s=cur();if(s)G_.lv=s.subjects[G_.sub].level;else if(!SUBJECTS[G_.sub].includes(G_.lv))G_.lv=defLv(G_.sub);renderGen();autoTopics();}
+$('subBtns').onclick=e=>{const b=e.target.closest('[data-sub]');if(!b)return;G_.sub=b.dataset.sub;syncFromStudent();};
+$('lvSel').onchange=e=>{G_.lv=e.target.value;renderGen();autoTopics();};
+$('topicBox').onchange=e=>{const t=e.target.dataset.t;if(!t)return;if(e.target.checked)G_.topics.add(t);else G_.topics.delete(t);if(!G_.topics.size){G_.topics.add(t);toast('주제를 하나 이상 골라야 해요.');}renderTopics();$('topicMsg').textContent='';};
+$('autoTopic').onclick=autoTopics;
+$('allTopic').onclick=()=>{G_.topics=new Set(topicsFor(G_.sub,G_.lv));renderTopics();$('topicMsg').textContent='';};
+$('examTopic').onclick=()=>{const ex=(EXAM_TOPICS[G_.sub]||[]).filter(t=>topicsFor(G_.sub,G_.lv).includes(t));if(!ex.length)return;G_.topics=new Set(ex);renderTopics();$('topicMsg').textContent=`${EXAM_LABEL[G_.sub]} 주제만 골랐어요.`;};
+$('baseTopic').onclick=()=>{const ex=EXAM_TOPICS[G_.sub]||[];const b=topicsFor(G_.sub,G_.lv).filter(t=>!ex.includes(t));if(!b.length)return;G_.topics=new Set(b);renderTopics();$('topicMsg').textContent='기초 학습 주제만 골랐어요.';};
+document.querySelectorAll('input[name=kind]').forEach(r=>r.onchange=()=>{G_.kind=r.value;renderGen();});
+
+/* ---------- 생성 ---------- */
+let SHEETS=[],lastReq=null;
+function makeSheet(s,sub,lv,kind,topics){
+  const exOn=$('optEx').checked;
+  if(kind==='vocab'){const r=pickWords(lv,exOn?histOf(s,'영어단어'):new Set(),50);return {sid:s?s.id:null,who:stuLabel(s),sub,lv,kind,words:r.words,notes:r.notes,recorded:false};}
+  const n=+$('cntSel').value||30;const r=generate(sub,lv,{n,topics,exclude:exOn?histOf(s,sub):new Set()});
+  return {sid:s?s.id:null,who:stuLabel(s),sub,lv,kind,items:r.items,notes:r.notes,recorded:false,topics:uniq(r.items.map(i=>i.topic))};
+}
+function doGenerate(){const s=cur();lastReq={type:'one'};SHEETS=[makeSheet(s,G_.sub,G_.lv,G_.kind,[...G_.topics])];showSheets();}
+$('genBtn').onclick=doGenerate;
+function doBatch(){const ids=[...document.querySelectorAll('#batchStu input:checked')].map(i=>i.value);if(!ids.length){toast('학생을 한 명 이상 고르세요.');return;}
+  const sub=$('batchSub').value;const kind=sub==='영어'?document.querySelector('input[name=bkind]:checked').value:'quiz';lastReq={type:'batch'};
+  SHEETS=ids.map(id=>{const s=state.students.find(x=>x.id===id);const lv=s.subjects[sub].level;const m=matchTopics(sub,lv,s.subjects[sub].note);return makeSheet(s,sub,lv,kind,m.length?m:topicsFor(sub,lv));});
+  showSheets();toast(`${SHEETS.length}명의 학습지를 만들었어요.`);$('outCard').scrollIntoView({behavior:'smooth'});}
+$('batchBtn').onclick=doBatch;
+$('regenBtn').onclick=()=>{if(!lastReq)return;if(SHEETS.some(x=>!x.recorded)||confirm('다시 만들면 지금 문제지 대신 새 문제지가 만들어져요. 계속할까요?')){lastReq.type==='batch'?doBatch():doGenerate();}};
+
+function renderBatchStu(){$('batchStu').innerHTML=state.students.length?state.students.map(s=>`<label style="margin-right:10px"><input type="checkbox" value="${s.id}"> ${esc(stuLabel(s))}</label>`).join(''):'<span class="muted">학생을 먼저 추가하세요.</span>';}
+$('batchAll').onclick=()=>document.querySelectorAll('#batchStu input').forEach(i=>i.checked=true);
+$('batchNone').onclick=()=>document.querySelectorAll('#batchStu input').forEach(i=>i.checked=false);
+$('batchSub').innerHTML=SUB_LIST.map(s=>`<option>${s}</option>`).join('');
+$('batchSub').onchange=()=>{$('batchKindWrap').style.display=$('batchSub').value==='영어'?'':'none';};$('batchSub').onchange();
+
+/* ---------- 학습지 HTML ---------- */
+const PB='<!--PB-->';
+function head(sh,title,extra){return `<div class="sh-head"><div class="sh-title">${title} <span class="lv">${esc(sh.lv)}</span></div>
+  <div class="sh-meta"><span>이름: ${sh.who?`<b>${esc(sh.who)}</b>`:'____________'}</span><span>날짜: ______ 월 ______ 일</span><span>${extra||''}</span></div></div>`;}
+function qHTML(it,i){let h=`<li class="q"><span class="qn">${i+1}.</span>${it.q}`;
+  if(it.type==='mc'){const long=it.choices.some(c=>strip(c).length>11);h+=`<div class="chs${long?' col':''}">`+it.choices.map((c,j)=>`<span class="ch">${CIRC[j]} ${c}</span>`).join('')+'</div>';}
+  else h+='<div class="ansline">답: <span></span></div>';
+  return h+'</li>';}
+function quizHTML(sh,withAns){
+  let h=`<div class="sheet">${head(sh,`${sh.sub} 단계별 학습지`,`점수: ______ / ${sh.items.length}`)}<div class="sh-topics">출제 영역: ${sh.topics.map(esc).join(', ')}</div><ol class="qs">${sh.items.map(qHTML).join('')}</ol></div>`;
+  if(withAns){h+=PB+`<div class="sheet">${head(sh,`${sh.sub} 정답 및 해설`,'')}<table class="anst"><thead><tr><th style="width:9%">번호</th><th style="width:36%">정답</th><th>해설</th></tr></thead><tbody>`+
+    sh.items.map((it,i)=>`<tr><td>${i+1}</td><td>${it.type==='mc'?`${CIRC[it.ans]} ${it.choices[it.ans]}`:it.ans}</td><td>${it.exp||''}</td></tr>`).join('')+'</tbody></table></div>';}
+  return h;}
+function vocabHTML(sh,withTest){
+  const elem=isElem(sh.lv);const half=Math.ceil(sh.words.length/2);
+  const tbl=(arr,off)=>`<table class="voc"><thead><tr><th style="width:9%">번호</th><th>단어</th>${elem?'<th>발음</th>':''}<th>뜻</th><th style="width:9%">확인</th></tr></thead><tbody>`+arr.map((w,i)=>`<tr><td class="c">${i+off+1}</td><td class="en">${esc(w.w)}</td>${elem?`<td>${esc(w.p)}</td>`:''}<td>${esc(w.k)}</td><td class="c">☐</td></tr>`).join('')+'</tbody></table>';
+  let h=`<div class="sheet">${head(sh,'영어 단어장',`${sh.words.length}개`)}<div class="sh-topics">소리 내어 읽고 뜻을 외운 뒤 ☐에 표시하세요.</div><table class="wrapt"><tbody><tr><td>${tbl(sh.words.slice(0,half),0)}</td><td>${tbl(sh.words.slice(half),half)}</td></tr></tbody></table></div>`;
+  if(withTest){const tt=(arr,off)=>`<table class="voc"><thead><tr><th style="width:9%">번호</th><th>단어</th><th style="width:52%">뜻 쓰기</th></tr></thead><tbody>`+arr.map((w,i)=>`<tr><td class="c">${i+off+1}</td><td class="en">${esc(w.w)}</td><td>&nbsp;</td></tr>`).join('')+'</tbody></table>';
+    h+=PB+`<div class="sheet">${head(sh,'영어 단어 확인 시험',`점수: ______ / ${sh.words.length}`)}<div class="sh-topics">단어의 뜻을 우리말로 쓰세요. (정답은 단어장을 보세요.)</div><table class="wrapt"><tbody><tr><td>${tt(sh.words.slice(0,half),0)}</td><td>${tt(sh.words.slice(half),half)}</td></tr></tbody></table></div>`;}
+  return h;}
+function sheetHTML(sh){return sh.kind==='vocab'?vocabHTML(sh,$('vtest').checked):quizHTML(sh,$('optAns').checked);}
+function allHTML(){return SHEETS.map(sheetHTML).join(PB);}
+function showSheets(){
+  $('previewWrap').innerHTML=allHTML().split(PB).join('<div class="pb"></div>');
+  $('outBar').style.display='';
+  const notes=[];SHEETS.forEach(sh=>sh.notes.forEach(n=>notes.push((SHEETS.length>1&&sh.who?`[${sh.who}] `:'')+n)));
+  $('noteArea').innerHTML=notes.map(n=>`<div class="notice">${esc(n)}</div>`).join('')+(SHEETS.some(sh=>!sh.sid)?'<div class="notice info">학생을 고르지 않아서 출제 기록은 저장되지 않아요.</div>':'');
+  updRec();}
+function updRec(){const any=SHEETS.some(sh=>sh.sid);const done=SHEETS.every(sh=>sh.recorded||!sh.sid);$('recBtn').style.display=any?'':'none';$('recBtn').disabled=done;$('recMsg').textContent=any?(done?'출제 기록에 저장됨':'아직 출제 기록에 저장하지 않았어요'):'';}
+function record(){let n=0;SHEETS.forEach(sh=>{if(sh.recorded||!sh.sid)return;const s=state.students.find(x=>x.id===sh.sid);if(!s)return;
+    if(sh.kind==='vocab'){const k='영어단어';s.history[k]=uniq([...(s.history[k]||[]),...sh.words.map(w=>w.w)]);}
+    else{s.history[sh.sub]=uniq([...(s.history[sh.sub]||[]),...sh.items.map(i=>i.id)]);}
+    sh.recorded=true;n++;});
+  if(n){save();renderStudents();renderStuPanel();toast(`${n}장의 출제 기록을 저장했어요.`);}updRec();}
+$('recBtn').onclick=record;
+$('printBtn').onclick=()=>{if(!SHEETS.length)return;if($('optRec').checked)record();window.print();};
+$('wordBtn').onclick=()=>{if(!SHEETS.length)return;if($('optRec').checked)record();
+  const css=document.querySelector('style').textContent.split('/* ===== 학습지 ===== */')[1].split('@media print')[0]+'ol.qs{columns:1}.sheet{width:auto;padding:0;box-shadow:none}';
+  const body=allHTML().split(PB).join("<br clear=all style='mso-special-character:line-break;page-break-before:always'>");
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>학습지</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:1.6cm 1.5cm}body{font-family:"맑은 고딕","Malgun Gothic",sans-serif;font-size:10.5pt}${css}</style></head><body>${body}</body></html>`;
+  const blob=new Blob(['﻿',html],{type:'application/msword'});const a=document.createElement('a');
+  const first=SHEETS[0];const nm=SHEETS.length>1?`${first.sub}_학습지_${SHEETS.length}명`:`${first.who||'학습지'}_${first.sub}_${first.lv}${first.kind==='vocab'?'_단어장':''}`;
+  a.href=URL.createObjectURL(blob);a.download=nm.replace(/[\\/:*?"<>|\s]+/g,'_')+'.doc';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);};
+
+/* ---------- 백업 ---------- */
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(state,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  const d=new Date();a.download=`기초학력_학생기록_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),300);};
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||!Array.isArray(o.students))throw 0;
+  if(state.students.length&&!confirm('지금 목록을 백업 파일 내용으로 바꿀까요?'))return;state=o;save();renderAll();syncFromStudent();toast('백업을 불러왔어요.');}catch(err){alert('백업 파일을 읽지 못했어요.');}};r.readAsText(f);e.target.value='';};
+
+function renderAll(){renderStudents();renderStuPanel();syncFromStudent();}
+load();save();renderAll();
+
+</script>
+</body>
+</html>
